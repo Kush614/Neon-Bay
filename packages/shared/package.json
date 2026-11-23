@@ -1,0 +1,17 @@
+{
+  "name": "@neon-bay/shared",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./world": "./src/world.ts",
+    "./physics": "./src/physics.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "dependencies": {
+    "@dimforge/rapier3d-compat": "0.19.2"
+  }
+}
