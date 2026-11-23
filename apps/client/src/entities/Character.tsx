@@ -1,0 +1,26 @@
+import { forwardRef } from "react";
+import type { Group } from "three";
+import { NameTag } from "./NameTag.js";
+
+/** Grey-box character: capsule body, head and a nose that shows facing. Feet at the group origin. */
+export const Character = forwardRef<Group, { name: string; color: string }>(function Character({ name, color }, ref) {
+  return (
+    <group ref={ref}>
+      <group name="body">
+        <mesh position={[0, 0.9, 0]} castShadow>
+          <capsuleGeometry args={[0.4, 1.0, 6, 12]} />
+          <meshStandardMaterial color={color} roughness={0.6} />
+        </mesh>
+        <mesh position={[0, 1.65, 0]} castShadow>
+          <sphereGeometry args={[0.26, 16, 12]} />
+          <meshStandardMaterial color="#e9b48a" roughness={0.7} />
+        </mesh>
+        <mesh position={[0, 1.62, 0.26]}>
+          <boxGeometry args={[0.1, 0.08, 0.14]} />
+          <meshStandardMaterial color="#222" />
+        </mesh>
+      </group>
+      <NameTag name={name} color={color} />
+    </group>
+  );
+});
