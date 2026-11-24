@@ -4,8 +4,10 @@ Browser-based 3D co-op heist game where AI agent players double as playtesters. 
 
 ```sh
 pnpm install
-pnpm dev:client        # http://localhost:5173  (add ?cam=overview for an aerial debug view)
+pnpm dev               # server on :2567 and client on http://localhost:5173
+pnpm dev:client        # client only; runs offline if no server  (?cam=overview for an aerial view, ?name=Ana to pick a name)
 pnpm typecheck && pnpm test
+pnpm e2e               # two-browser smoke test (starts both servers if needed)
 ```
 
 ## Status
@@ -13,7 +15,8 @@ pnpm typecheck && pnpm test
 | Milestone | State |
 | --- | --- |
 | M1 Walkable grey-box world | done |
-| M2–M10 | not started |
+| M2 Multiplayer | done |
+| M3–M10 | not started |
 
 ## Decisions the spec left open
 
@@ -21,3 +24,4 @@ pnpm typecheck && pnpm test
 - **Rapier pinned to 0.19.2.** That is the version `@react-three/rapier` 2.2 bundles; the server will use the same so prediction and authority run identical physics. Movement lives in `packages/shared/src/physics.ts` and takes the Rapier module as an argument.
 - **Layout detail inside section 7.** Second Street is a road strip at x 0–8 with location buildings at x 8–50 (so the bank's back wall meets the alley at x = 50). Cross streets are 12 m wide. Each building footprint contains its spec centre but stops short of the cross streets, and each location has an `entrance` point outside its door for spawns and pathing. The marina sits on a pier (x 190–214, z 178–192) that crosses the shoreline; invisible sea walls and pier rails keep players out of the water.
 - **Businesses.** The four fictional exchange businesses are Citrus Grove Juices, Palmetto Video Rental, Seaspray Telecom and Coquina Realty Trust.
+- **Netcode.** Clients send a zod-validated `input` message (world-space direction, run flag, sequence number) each physics step while moving, on change, and as a 1 s heartbeat when idle. The server holds the latest input and simulates at 20 Hz with 3 sub-steps of 1/60 s, matching the client's prediction step. Input longer than 1 is clamped, and any per-step horizontal move faster than run speed (or 80% of it with a bag) is reverted and counted. Invalid messages get a `rejected` reply with the reason instead of a disconnect. The client reconciles by comparing the server position with its own prediction at the same input sequence, correcting gradually and snapping beyond 4 m. Colyseus 0.18's built-in `defineInput`/prediction framework was not used.
