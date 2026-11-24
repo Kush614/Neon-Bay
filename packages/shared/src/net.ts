@@ -11,6 +11,12 @@ export const MSG = {
   input: "input",
   /** Server -> client: a message or action was rejected, with the reason. */
   rejected: "rejected",
+  /** Client or agent -> server: a discrete Action. */
+  action: "action",
+  /** Server -> sender: the outcome of an Action. */
+  actionResult: "action_result",
+  /** Server -> one player: something happened to them (arrived, path failed, ...). */
+  event: "event",
 } as const;
 
 export interface RejectedMessage {
@@ -34,5 +40,12 @@ export type InputMessage = z.infer<typeof InputMessageSchema>;
 export const JoinOptionsSchema = z.object({
   name: z.string().trim().min(1).max(24).optional(),
   kind: z.enum(["human", "agent"]).default("human"),
+  role: z.enum(["driver", "hacker", "muscle", "fixer", "cop", "human"]).optional(),
+  persona: z.enum(["speedrunner", "explorer", "griefer", "newcomer", "none"]).optional(),
 });
+
+/** Per-player events pushed by the server. */
+export type PlayerEvent =
+  | { type: "arrived"; target: string }
+  | { type: "path_failed"; target: string; reason: string };
 export type JoinOptions = z.input<typeof JoinOptionsSchema>;
