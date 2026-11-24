@@ -1,11 +1,15 @@
 import { forwardRef } from "react";
 import type { Group } from "three";
+import type { CaptureLabel } from "../capture/mode.js";
 import { NameTag } from "./NameTag.js";
 
 /** Grey-box character: capsule body, head and a nose that shows facing. Feet at the group origin. */
-export const Character = forwardRef<Group, { name: string; color: string; bag?: boolean }>(function Character({ name, color, bag = false }, ref) {
+export const Character = forwardRef<Group, { name: string; color: string; bag?: boolean; label?: CaptureLabel; showName?: boolean }>(function Character(
+  { name, color, bag = false, label, showName = true },
+  ref,
+) {
   return (
-    <group ref={ref}>
+    <group ref={ref} userData={label ? { captureLabel: label } : {}}>
       <group name="body">
         <mesh position={[0, 0.9, 0]} castShadow>
           <capsuleGeometry args={[0.4, 1.0, 6, 12]} />
@@ -26,7 +30,7 @@ export const Character = forwardRef<Group, { name: string; color: string; bag?: 
           </mesh>
         )}
       </group>
-      <NameTag name={name} color={color} />
+      {showName && <NameTag name={name} color={color} />}
     </group>
   );
 });

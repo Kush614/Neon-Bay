@@ -12,7 +12,7 @@ const H = CAR_HALF_EXTENTS;
 type KinematicBody = ReturnType<ReturnType<typeof useRapier>["world"]["createRigidBody"]>;
 
 /** An original boxy 1980s coupe: wedge body, glass cabin, four wheels, neon underglow. */
-function CarModel({ color }: { color: string }) {
+export function CarModel({ color }: { color: string }) {
   const wheel = (x: number, z: number) => (
     <mesh key={`${x},${z}`} position={[x, 0.36, z]} rotation={[0, 0, Math.PI / 2]} castShadow>
       <cylinderGeometry args={[0.36, 0.36, 0.3, 14]} />
@@ -72,6 +72,7 @@ function Car({ entry }: { entry: VehicleEntry }) {
     g.visible = true;
     g.position.set(s.x, s.y, s.z);
     g.rotation.y = s.heading;
+    g.userData.captureLabel = { id: entry.id, cls: "Car", heading: s.heading };
     const b = body.current;
     if (b && world.getRigidBody(b.handle)) {
       b.setNextKinematicTranslation({ x: s.x, y: s.y, z: s.z });

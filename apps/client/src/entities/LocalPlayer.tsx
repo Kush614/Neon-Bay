@@ -6,6 +6,7 @@ import { spawnPoint } from "@neon-bay/shared";
 import { CharacterBody, type MoveInput } from "@neon-bay/shared/physics";
 import { driveAxes, installKeyboard, moveAxes } from "../input/keyboard.js";
 import { connect, localServerState, sendInput, useNetStore, vehicleBuffers } from "../net/connection.js";
+import { CAPTURE } from "../capture/mode.js";
 import { useLocalStore } from "../store.js";
 import { Character } from "./Character.js";
 
@@ -199,7 +200,8 @@ export function LocalPlayer() {
     reconcile();
     const carId = localServerState.player?.vehicleId;
     const car = carId ? vehicleBuffers.get(carId)?.sample(performance.now()) : undefined;
-    m.visible = !car;
+    m.visible = !car && !CAPTURE;
+    if (CAPTURE) return; // the capture rig owns the camera
     if (car) {
       // Swing the camera in behind the car.
       let dy = car.heading + Math.PI - yaw.current;

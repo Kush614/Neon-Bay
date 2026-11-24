@@ -17,6 +17,8 @@ function RemotePlayer({ entry }: { entry: RosterEntry }) {
     g.visible = !entry.inVehicle; // drivers are drawn as their car
     g.position.set(s.x, s.y, s.z);
     g.rotation.y = s.heading;
+    const model = g.children[0];
+    if (model?.userData.captureLabel) model.userData.captureLabel.heading = s.heading;
     // Bob while moving, judged from the interpolated speed.
     const prev = last.current;
     const speed = prev ? Math.hypot(s.x - prev.x, s.z - prev.z) / Math.max(1e-3, state.clock.elapsedTime - prev.t) : 0;
@@ -27,7 +29,7 @@ function RemotePlayer({ entry }: { entry: RosterEntry }) {
 
   return (
     <group ref={ref} visible={false}>
-      <Character name={entry.name} color={COLORS[entry.kind] ?? "#cccccc"} bag={entry.carryingBag} />
+      <Character name={entry.name} color={COLORS[entry.kind] ?? "#cccccc"} bag={entry.carryingBag} label={{ id: entry.id, cls: "Pedestrian" }} />
     </group>
   );
 }
