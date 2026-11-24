@@ -67,6 +67,8 @@ function describeWorld(e: WorldEvent): string {
       return `a roadblock was cleared`;
     case "backup":
       return `${e.byName} called for backup at (${Math.round(e.x)}, ${Math.round(e.z)})`;
+    case "radio":
+      return `the radio (${e.station}) says: ${e.headline}`;
   }
 }
 

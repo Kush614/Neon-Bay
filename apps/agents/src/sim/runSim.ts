@@ -7,7 +7,7 @@ import type { LlmClient } from "../llm/LlmClient.js";
 import { PERSONAS, type PersonaDef } from "../personas/index.js";
 import { AgentRunner } from "../runtime/AgentRunner.js";
 import { VirtualClock } from "../runtime/clock.js";
-import type { CrewChannel } from "@neon-bay/integrations";
+import type { CrewChannel, NewsFeed } from "@neon-bay/integrations";
 import { LocalHub } from "./LocalHub.js";
 
 export interface SimOptions {
@@ -21,6 +21,8 @@ export interface SimOptions {
   log?: (line: string) => void;
   /** Crew channel adapter (BAND or stub); the stub by default, so tests never call BAND. */
   crewChannel?: CrewChannel;
+  /** Radio headlines (Telem or stub); the stub by default. */
+  newsFeed?: NewsFeed;
 }
 
 export interface SimResult {
@@ -49,6 +51,7 @@ export async function runSim(opts: SimOptions): Promise<SimResult> {
     sessionId,
     phases: opts.phases,
     ...(opts.crewChannel ? { crewChannel: opts.crewChannel } : {}),
+    ...(opts.newsFeed ? { newsFeed: opts.newsFeed } : {}),
     output: {
       toPlayer: hub.output.toPlayer,
       broadcast: (type, payload) => {
@@ -63,6 +66,8 @@ export async function runSim(opts: SimOptions): Promise<SimResult> {
       },
     },
   });
+  // Virtual time outruns a real network call; give the radio its headlines before the clock starts.
+  await session.newsReady;
   hub.attach(session);
 
   const clock = new VirtualClock();

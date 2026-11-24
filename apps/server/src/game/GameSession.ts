@@ -22,9 +22,11 @@ import {
   type SpeechMessage,
   type WorldEvent,
   type AnimationName,
+  RADIO_INTERVAL_SECONDS,
+  RADIO_STATION,
 } from "@neon-bay/shared";
 import type { Rapier } from "@neon-bay/shared/physics";
-import { StubCrewChannel, type CrewChannel, type CrewMessage } from "@neon-bay/integrations";
+import { StubCrewChannel, StubNewsFeed, type CrewChannel, type CrewMessage, type Headline, type NewsFeed } from "@neon-bay/integrations";
 import type { LedgerWriter } from "../ledger/LedgerWriter.js";
 import { settleDeals } from "../rules/deals.js";
 import { exchangeTick, stakeValue, totalCleanCash } from "../rules/exchange.js";
@@ -68,6 +70,8 @@ export interface GameSessionOptions {
   exploitEnabled?: boolean;
   /** Crew's private channel (BAND, or the stub). Defaults to the stub. */
   crewChannel?: CrewChannel;
+  /** Radio headlines (Telem, or the stub). Defaults to the stub. */
+  newsFeed?: NewsFeed;
 }
 
 const NO_META: ActionMeta = { reason: "", trustChanges: {}, harness: null, latencyMs: null, citesPastSession: false };
@@ -85,6 +89,12 @@ export class GameSession {
   private humanCount = 0;
   private chaseTimer = 0;
   readonly crewChannel: CrewChannel;
+  readonly newsFeed: NewsFeed;
+  private headlines: Headline[] = [];
+  /** Settles once radio headlines have loaded or failed. The headless sim waits on it; the live server does not. */
+  readonly newsReady: Promise<void>;
+  private nextHeadline = 0;
+  private radioTimer = 0;
   private crewChannelReady: Promise<boolean>;
 
   constructor(opts: GameSessionOptions) {
@@ -96,6 +106,14 @@ export class GameSession {
     this.now = opts.now ?? (() => new Date());
     this.state = createGameState(opts.sessionId, VAULT_BAGS, opts.exploitEnabled ?? exploitEnabledFromEnv());
     this.crewChannel = opts.crewChannel ?? new StubCrewChannel();
+    this.newsFeed = opts.newsFeed ?? new StubNewsFeed();
+    // Headlines load in the background; the radio stays quiet until they arrive, or for good on failure.
+    this.newsReady = this.newsFeed.headlines(opts.sessionId).then(
+      (h) => {
+        this.headlines = h;
+      },
+      (e: unknown) => console.warn(`[news:${this.newsFeed.name}] no headlines: ${e instanceof Error ? e.message : String(e)}`),
+    );
     // Opening the channel never blocks or breaks the game; on failure the session runs without it.
     this.crewChannelReady = this.crewChannel.open(opts.sessionId).then(
       () => true,
@@ -397,6 +415,17 @@ export class GameSession {
     }
     if (exchangeTick(s)) this.world({ type: "market_crash", totalCleanCash: totalCleanCash(s) });
     this.police(dt);
+    this.radio(dt);
+  }
+
+  /** One bulletin every RADIO_INTERVAL_SECONDS while a session is running, cycling the headlines. */
+  private radio(dt: number): void {
+    if (this.state.phase === "lobby" || this.state.phase === "ended" || this.headlines.length === 0) return;
+    this.radioTimer -= dt;
+    if (this.radioTimer > 0) return;
+    this.radioTimer = RADIO_INTERVAL_SECONDS;
+    const h = this.headlines[this.nextHeadline++ % this.headlines.length]!;
+    this.world({ type: "radio", station: RADIO_STATION, headline: h.text, source: h.source });
   }
 
   private police(dt: number): void {

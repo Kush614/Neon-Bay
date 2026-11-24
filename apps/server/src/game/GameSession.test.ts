@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { CARS, MSG } from "@neon-bay/shared";
+import { STUB_HEADLINES } from "@neon-bay/integrations";
 import { createHeadlessSession } from "../headless.js";
 
 const DT = 1 / 60;
@@ -26,6 +27,19 @@ describe("GameSession", () => {
     session.tick(3, DT);
     expect(session.phase).toBe("plan");
     expect(sent).toContainEqual({ to: "*", type: MSG.world, payload: { type: "phase", phase: "plan", seconds: 90 } });
+    close();
+  });
+
+  it("plays stub radio headlines once the session starts, and none in the lobby", async () => {
+    const { session, close, sent } = await makeSession();
+    const radio = () => sent.filter((m) => m.type === MSG.world && (m.payload as { type: string }).type === "radio");
+    session.addPlayer("h1", { kind: "human", name: "Ana" });
+    await Promise.resolve();
+    session.tick(120, DT);
+    expect(radio()).toHaveLength(0);
+    session.setReady("h1", true);
+    session.tick(60 * 50, DT);
+    expect(radio().map((m) => (m.payload as { headline: string }).headline)).toEqual([STUB_HEADLINES[0], STUB_HEADLINES[1]]);
     close();
   });
 

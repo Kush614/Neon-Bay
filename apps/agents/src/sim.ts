@@ -2,7 +2,7 @@
 import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
-import { createCrewChannel } from "@neon-bay/integrations";
+import { createCrewChannel, createNewsFeed } from "@neon-bay/integrations";
 import { runSim } from "./sim/runSim.js";
 
 const envFile = fileURLToPath(new URL("../../../.env", import.meta.url));
@@ -19,9 +19,11 @@ if (!Number.isInteger(seed)) {
 }
 
 const crewChannel = createCrewChannel(process.env, values.verbose ? (l) => console.log(l) : undefined);
-const r = await runSim({ seed, log: values.verbose ? (l) => console.log(l) : undefined, crewChannel });
+const newsFeed = createNewsFeed(process.env);
+const r = await runSim({ seed, log: values.verbose ? (l) => console.log(l) : undefined, crewChannel, newsFeed });
 await crewChannel.close();
 if (crewChannel.name !== "stub") console.log(`crew channel: ${crewChannel.name}`);
+if (newsFeed.name !== "stub") console.log(`news feed: ${newsFeed.name}`);
 const money = (n: number) => n.toLocaleString("en-US");
 console.log(`\nNeon Bay '86 headless sim, seed ${seed}`);
 console.log(`session ${r.sessionId}: ${r.completed ? "completed" : "DID NOT COMPLETE"} (${r.phases.join(" > ")})`);

@@ -90,7 +90,9 @@ export type WorldEvent =
   | { type: "released"; targetId: string; targetName: string }
   | { type: "roadblock"; id: string; byName: string; x: number; z: number; seconds: number }
   | { type: "roadblock_cleared"; id: string }
-  | { type: "backup"; byId: string; byName: string; x: number; z: number };
+  | { type: "backup"; byId: string; byName: string; x: number; z: number }
+  /** A news bulletin on the in-game radio (NewsFeed adapter). */
+  | { type: "radio"; station: string; headline: string; source: string | null };
 
 export type DealStatus = "pending" | "accepted" | "rejected" | "void" | "settled";
 

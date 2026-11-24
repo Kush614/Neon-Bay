@@ -75,3 +75,7 @@ export const ROADBLOCK_ROAD_RADIUS = 6;
 export const BACKUP_COOLDOWN_SECONDS = 30;
 /** A dropped bag can be picked up from this close. */
 export const BAG_PICKUP_RADIUS = 2.5;
+
+/** In-game radio: one news bulletin every this many seconds once the plan phase starts. */
+export const RADIO_INTERVAL_SECONDS = 45;
+export const RADIO_STATION = "Velvet Static 96.6 FM";

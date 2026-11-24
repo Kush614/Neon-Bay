@@ -1,5 +1,5 @@
 // Entry point for running a session without Colyseus (the headless sim and tests).
-import type { CrewChannel } from "@neon-bay/integrations";
+import type { CrewChannel, NewsFeed } from "@neon-bay/integrations";
 import { GameSession, type SessionOutput } from "./game/GameSession.js";
 import { initRapier, sharedNavGraph } from "./game/shared.js";
 import { LedgerWriter } from "./ledger/LedgerWriter.js";
@@ -19,6 +19,8 @@ export async function createHeadlessSession(opts: {
   exploitEnabled?: boolean;
   /** Crew channel adapter; defaults to the stub so tests never call BAND. */
   crewChannel?: CrewChannel;
+  /** Radio headlines; defaults to the stub so tests never call Telem. */
+  newsFeed?: NewsFeed;
 }): Promise<{ session: GameSession; close: () => void }> {
   const rapier = await initRapier();
   const nav = await sharedNavGraph();
@@ -32,6 +34,7 @@ export async function createHeadlessSession(opts: {
     phases: { ...DEFAULT_PHASE_CONFIG, minHumans: 0, ...opts.phases },
     ...(opts.exploitEnabled === undefined ? {} : { exploitEnabled: opts.exploitEnabled }),
     ...(opts.crewChannel ? { crewChannel: opts.crewChannel } : {}),
+    ...(opts.newsFeed ? { newsFeed: opts.newsFeed } : {}),
   });
   return {
     session,

@@ -215,6 +215,10 @@ function describeWorld(e: WorldEvent): string {
       return `${e.count} deal(s) settled.`;
     case "scores":
       return `Final: ${e.scores.map((s) => `${s.name} ${s.score.toLocaleString()}`).join(" · ")}`;
+    case "radio":
+      return `📻 ${e.station}: ${e.headline}`;
+    default:
+      return "";
   }
 }
 
@@ -256,7 +260,10 @@ export function connect(): Promise<void> {
         useNetStore.setState((s) => ({ deals: [...s.deals.filter((x) => x.id !== d.id), d] }));
         if (d.toId === r.sessionId && d.status === "pending") pushFeed(`${d.fromName} offers you ${d.splitPercent}% of their take: "${d.note}" (Y accept / N reject)`);
       });
-      r.onMessage(MSG.world, (e: WorldEvent) => pushFeed(describeWorld(e)));
+      r.onMessage(MSG.world, (e: WorldEvent) => {
+        const text = describeWorld(e);
+        if (text) pushFeed(text);
+      });
       r.onMessage(MSG.event, () => {});
       r.onLeave(() => {
         room = null;

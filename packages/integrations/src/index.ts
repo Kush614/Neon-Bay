@@ -1,6 +1,8 @@
 import { BandCrewChannel } from "./band/BandCrewChannel.js";
 import { StubCrewChannel, type CrewChannel } from "./crewChannel.js";
 import { StubImageGenerator, type ImageGenerator } from "./imageGenerator.js";
+import { StubNewsFeed, type NewsFeed } from "./newsFeed.js";
+import { TelemNewsFeed } from "./telem/TelemNewsFeed.js";
 import { RunwareImageGenerator } from "./runware/RunwareImageGenerator.js";
 
 export { BandCrewChannel, BandError, type BandCrewChannelOptions } from "./band/BandCrewChannel.js";
@@ -28,4 +30,16 @@ export function createImageGenerator(env: Record<string, string | undefined> = p
     (log ?? console.warn)("[image] IMAGE_GENERATOR=runware but RUNWARE_API_KEY is not set; using the stub");
   }
   return new StubImageGenerator(log);
+}
+
+export { STUB_HEADLINES, StubNewsFeed, type Headline, type NewsFeed } from "./newsFeed.js";
+export { cleanHeadline, TELEM_DEFAULT_QUERIES, TelemError, TelemNewsFeed, type TelemNewsFeedOptions } from "./telem/TelemNewsFeed.js";
+
+/** NEWS_FEED=telem uses Telem search with TELEM_API_KEY (TELEM_BASE_URL optional); otherwise the stub. */
+export function createNewsFeed(env: Record<string, string | undefined> = process.env, log?: (line: string) => void): NewsFeed {
+  if (env.NEWS_FEED === "telem") {
+    if (env.TELEM_API_KEY) return new TelemNewsFeed({ apiKey: env.TELEM_API_KEY, ...(env.TELEM_BASE_URL ? { baseUrl: env.TELEM_BASE_URL } : {}) });
+    (log ?? console.warn)("[news] NEWS_FEED=telem but TELEM_API_KEY is not set; using the stub");
+  }
+  return new StubNewsFeed();
 }
