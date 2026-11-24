@@ -37,6 +37,8 @@ export type PlayerSchema = SchemaType<typeof PlayerSchema>;
 
 export const HeistStateSchema = schema(
   {
+    /** Ledger session id; the report and ledger export are keyed by it. */
+    sessionId: t.string(),
     phase: t.string(),
     tick: t.uint32(),
     players: t.map(PlayerSchema),

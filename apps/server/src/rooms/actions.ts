@@ -10,6 +10,10 @@ export interface ActionContext {
   phase: Phase;
   playerId: string;
   arrested: boolean;
+  /** Deliver speech to players in earshot, or to one player for a whisper. Returns how many heard it. */
+  speak: (text: string, toId: string | null) => number;
+  /** True if a player with this id is in the room. */
+  hasPlayer: (id: string) => boolean;
 }
 
 function result(action: Action, ok: boolean, reason: string): ActionResult {
@@ -45,6 +49,18 @@ export function applyAction(ctx: ActionContext, action: Action): ActionResult {
     }
     case "wait":
       return result(action, true, "waiting");
+    case "say": {
+      const heard = ctx.speak(action.text, null);
+      return result(action, true, heard === 0 ? "nobody was in earshot" : `heard by ${heard}`);
+    }
+    case "whisper": {
+      if (!ctx.hasPlayer(action.to)) return result(action, false, `no player with id ${action.to}`);
+      if (action.to === ctx.playerId) return result(action, false, "you cannot whisper to yourself");
+      ctx.speak(action.text, action.to);
+      return result(action, true, "whispered");
+    }
+    case "report_issue":
+      return result(action, true, "issue recorded");
     default:
       return result(action, false, `${action.type} is not available yet`);
   }
