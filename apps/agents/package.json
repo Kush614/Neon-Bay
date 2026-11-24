@@ -14,7 +14,8 @@
     "@colyseus/sdk": "^0.18.10",
     "@neon-bay/server": "workspace:*",
     "@neon-bay/shared": "workspace:*",
-    "zod": "^4.6.7"
+    "zod": "^4.6.7",
+    "@neon-bay/integrations": "workspace:*"
   },
   "devDependencies": {
     "tsx": "^4.23.15"

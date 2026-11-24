@@ -10,6 +10,7 @@ import {
   TICK_RATE_HZ,
   type RejectedMessage,
 } from "@neon-bay/shared";
+import { createCrewChannel } from "@neon-bay/integrations";
 import { GameSession } from "../game/GameSession.js";
 import { initRapier, sharedNavGraph } from "../game/shared.js";
 import { LedgerWriter } from "../ledger/LedgerWriter.js";
@@ -64,6 +65,7 @@ export class HeistRoom extends Room<{ state: HeistStateSchema }> {
       sessionId: this.state.sessionId,
       ledger: this.ledger,
       phases: { ...DEFAULT_PHASE_CONFIG, minHumans: minHumans() },
+      crewChannel: createCrewChannel(process.env),
       output: {
         toPlayer: (id, type, payload) => this.clients.get(id)?.send(type, payload),
         broadcast: (type, payload) => this.broadcast(type, payload),

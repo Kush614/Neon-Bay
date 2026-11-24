@@ -15,7 +15,8 @@
     "@neon-bay/shared": "workspace:*",
     "better-sqlite3": "^13.2.0",
     "colyseus": "^0.18.12",
-    "recast-navigation": "^0.44.0"
+    "recast-navigation": "^0.44.0",
+    "@neon-bay/integrations": "workspace:*"
   },
   "devDependencies": {
     "@colyseus/sdk": "^0.18.10",

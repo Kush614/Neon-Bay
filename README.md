@@ -11,6 +11,7 @@ pnpm e2e               # two-browser smoke test (starts both servers if needed)
 pnpm ledger:export -- --session <id>   # no --session lists recorded sessions
 pnpm sim -- --seed 1   # full headless session (stubbed models unless LLM_PROVIDER says otherwise); -v for a trace
 MIN_HUMANS=1 pnpm dev:server           # let one human start the heist while testing alone (the spec's default is 2)
+CREW_CHANNEL=band pnpm sim -- --seed 1 # mirror the crew's deals into a private BAND room (needs BAND_API_KEY in .env)
 pnpm capture -- --frames 200 --seed 1  # synthetic labelled dataset (see below); writes data/captures/<run>/
 ```
 
@@ -43,6 +44,7 @@ It runs at about 1.5 frames/s on a CPU (SwiftShader). It makes no realism claim:
 
 ## Decisions the spec left open
 
+- **BAND crew channel.** The spec gives BAND only an interface name, so the channel is a mirror: the server, the authority, posts crew whispers, deals and betrayals into one private Band room per session, created by a dedicated NeonBayCrew agent. The room adds the agent's owner, because Band requires every message to @mention someone. Bribes and anything involving cops stay out of it. Posting is queued and fire-and-forget, so Band being slow or down never stalls a tick. `.env` at the repo root is loaded by the server, agents and sim entry points with `process.loadEnvFile`.
 - **M6 money.** Crew start with 10,000 clean cash so stakes can be bought in `prepare`; cops start with 0. `launder` converts all dirty cash at the nightclub entrance (8 m), in any phase from plan to payout. `EXPLOIT_ENABLED` defaults to on, so the griefer has something to find; set it to `false` to close it.
 - **M6 exchange.** `buy_stake` and `sell_stake` amounts are cash values, traded at the exchange office. Orders fill at the price after their own impact, so a player can't pump a stake and sell it back at a profit; otherwise that would be a second, unplanned money printer. The crash happens once a session and ramps linearly over 10 s.
 - **M6 police.** Arrests are only possible once the alarm sounds. A cop starts an arrest within 8 m and the server chases the target; the arrest lands after 3 s continuously within 2 m on foot, and fails past 12 m or after 12 s. Arrested players are frozen in place for 30 s and drop their bag on the ground, where anyone in the crew can pick it up. A bribe is a deal offered to a cop, worth splitPercent of the briber's total cash. The cop takes it with `accept_bribe`; it is paid at once, in kind, and that cop can no longer arrest the briber. Burke's 15,000 threshold lives in his persona, not in the rules. `tip_off_police` pays once per player. A roadblock goes on the nearest road edge for 60 s and closes that edge to `drive_to` routing. `call_backup` broadcasts the cop's position, with a 30 s cooldown.

@@ -24,6 +24,7 @@ import {
   type AnimationName,
 } from "@neon-bay/shared";
 import type { Rapier } from "@neon-bay/shared/physics";
+import { StubCrewChannel, type CrewChannel, type CrewMessage } from "@neon-bay/integrations";
 import type { LedgerWriter } from "../ledger/LedgerWriter.js";
 import { settleDeals } from "../rules/deals.js";
 import { exchangeTick, stakeValue, totalCleanCash } from "../rules/exchange.js";
@@ -65,6 +66,8 @@ export interface GameSessionOptions {
   now?: () => Date;
   /** The planted laundering exploit (SPEC.md section 11). Defaults to EXPLOIT_ENABLED. */
   exploitEnabled?: boolean;
+  /** Crew's private channel (BAND, or the stub). Defaults to the stub. */
+  crewChannel?: CrewChannel;
 }
 
 const NO_META: ActionMeta = { reason: "", trustChanges: {}, harness: null, latencyMs: null, citesPastSession: false };
@@ -81,6 +84,8 @@ export class GameSession {
   private nextSpawn = 0;
   private humanCount = 0;
   private chaseTimer = 0;
+  readonly crewChannel: CrewChannel;
+  private crewChannelReady: Promise<boolean>;
 
   constructor(opts: GameSessionOptions) {
     this.sim = new Simulation(opts.rapier);
@@ -90,6 +95,15 @@ export class GameSession {
     this.phases = opts.phases ?? DEFAULT_PHASE_CONFIG;
     this.now = opts.now ?? (() => new Date());
     this.state = createGameState(opts.sessionId, VAULT_BAGS, opts.exploitEnabled ?? exploitEnabledFromEnv());
+    this.crewChannel = opts.crewChannel ?? new StubCrewChannel();
+    // Opening the channel never blocks or breaks the game; on failure the session runs without it.
+    this.crewChannelReady = this.crewChannel.open(opts.sessionId).then(
+      () => true,
+      (e: unknown) => {
+        console.warn(`[crew-channel:${this.crewChannel.name}] could not open: ${e instanceof Error ? e.message : String(e)}`);
+        return false;
+      },
+    );
   }
 
   get phase(): Phase {
@@ -178,7 +192,37 @@ export class GameSession {
     if (!player) return { action: parsed.data.action.type, ok: false, reason: "player is not in the session" };
     const res = applyAction(this, id, parsed.data.action);
     this.record(player, parsed.data.action, parsed.data.meta ?? NO_META, res);
+    if (res.ok) this.mirrorToCrew(player, parsed.data.action);
     return res;
+  }
+
+  /** Mirror the crew's private planning (whispers, deals, betrayals) to the crew channel. Bribes and cops stay out. */
+  private mirrorToCrew(player: GamePlayer, action: Action): void {
+    if (player.role === "cop") return;
+    const name = (id: string) => this.state.players.get(id)?.name ?? id;
+    const isCop = (id: string) => this.state.players.get(id)?.role === "cop";
+    let msg: CrewMessage | null = null;
+    switch (action.type) {
+      case "whisper":
+        if (!isCop(action.to)) msg = { kind: "whisper", fromName: player.name, toName: name(action.to), text: action.text };
+        break;
+      case "propose_deal":
+        if (!isCop(action.to)) msg = { kind: "deal", fromName: player.name, toName: name(action.to), text: `offers ${action.terms.splitPercent}% of their take: "${action.terms.note}"` };
+        break;
+      case "accept":
+      case "reject": {
+        const d = this.state.deals.get(action.dealId);
+        if (d && !isCop(d.toId)) msg = { kind: "deal", fromName: player.name, toName: name(d.fromId), text: `${action.type === "accept" ? "accepts" : "rejects"} the ${d.splitPercent}% deal` };
+        break;
+      }
+      case "betray":
+        msg = { kind: "betrayal", fromName: player.name, toName: null, text: "betrayed the crew; their deals are void" };
+        break;
+    }
+    if (msg) {
+      const m = msg;
+      void this.crewChannelReady.then((ok) => (ok ? this.crewChannel.post(m) : undefined));
+    }
   }
 
   private record(player: GamePlayer, action: Action, meta: ActionMeta, res: ActionResult): void {
@@ -434,6 +478,7 @@ export class GameSession {
   }
 
   dispose(): void {
+    void this.crewChannel.close();
     this.sim.dispose();
   }
 }

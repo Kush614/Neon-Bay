@@ -44,6 +44,9 @@ importers:
       '@colyseus/sdk':
         specifier: ^0.18.10
         version: 0.18.10(@colyseus/core@0.18.29)(typescript@6.0.3)(zod@4.6.7)
+      '@neon-bay/integrations':
+        specifier: workspace:*
+        version: link:../../packages/integrations
       '@neon-bay/server':
         specifier: workspace:*
         version: link:../server
@@ -122,6 +125,9 @@ importers:
       '@dimforge/rapier3d-compat':
         specifier: 0.19.2
         version: 0.19.2
+      '@neon-bay/integrations':
+        specifier: workspace:*
+        version: link:../../packages/integrations
       '@neon-bay/shared':
         specifier: workspace:*
         version: link:../../packages/shared
@@ -144,6 +150,8 @@ importers:
       tsx:
         specifier: ^4.23.15
         version: 4.23.15
+
+  packages/integrations: {}
 
   packages/shared:
     dependencies:

@@ -1,4 +1,5 @@
 // Entry point for running a session without Colyseus (the headless sim and tests).
+import type { CrewChannel } from "@neon-bay/integrations";
 import { GameSession, type SessionOutput } from "./game/GameSession.js";
 import { initRapier, sharedNavGraph } from "./game/shared.js";
 import { LedgerWriter } from "./ledger/LedgerWriter.js";
@@ -16,6 +17,8 @@ export async function createHeadlessSession(opts: {
   phases?: Partial<PhaseConfig>;
   /** The planted laundering exploit; defaults to the EXPLOIT_ENABLED env var. */
   exploitEnabled?: boolean;
+  /** Crew channel adapter; defaults to the stub so tests never call BAND. */
+  crewChannel?: CrewChannel;
 }): Promise<{ session: GameSession; close: () => void }> {
   const rapier = await initRapier();
   const nav = await sharedNavGraph();
@@ -28,6 +31,7 @@ export async function createHeadlessSession(opts: {
     ledger,
     phases: { ...DEFAULT_PHASE_CONFIG, minHumans: 0, ...opts.phases },
     ...(opts.exploitEnabled === undefined ? {} : { exploitEnabled: opts.exploitEnabled }),
+    ...(opts.crewChannel ? { crewChannel: opts.crewChannel } : {}),
   });
   return {
     session,

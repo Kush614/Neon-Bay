@@ -7,6 +7,7 @@ import type { LlmClient } from "../llm/LlmClient.js";
 import { PERSONAS, type PersonaDef } from "../personas/index.js";
 import { AgentRunner } from "../runtime/AgentRunner.js";
 import { VirtualClock } from "../runtime/clock.js";
+import type { CrewChannel } from "@neon-bay/integrations";
 import { LocalHub } from "./LocalHub.js";
 
 export interface SimOptions {
@@ -18,6 +19,8 @@ export interface SimOptions {
   /** Safety cap on simulated seconds. */
   maxSeconds?: number;
   log?: (line: string) => void;
+  /** Crew channel adapter (BAND or stub); the stub by default, so tests never call BAND. */
+  crewChannel?: CrewChannel;
 }
 
 export interface SimResult {
@@ -45,6 +48,7 @@ export async function runSim(opts: SimOptions): Promise<SimResult> {
   const { session, close } = await createHeadlessSession({
     sessionId,
     phases: opts.phases,
+    ...(opts.crewChannel ? { crewChannel: opts.crewChannel } : {}),
     output: {
       toPlayer: hub.output.toPlayer,
       broadcast: (type, payload) => {
