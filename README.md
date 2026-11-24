@@ -12,6 +12,7 @@ pnpm ledger:export -- --session <id>   # no --session lists recorded sessions
 pnpm sim -- --seed 1   # full headless session (stubbed models unless LLM_PROVIDER says otherwise); -v for a trace
 MIN_HUMANS=1 pnpm dev:server           # let one human start the heist while testing alone (the spec's default is 2)
 CREW_CHANNEL=band pnpm sim -- --seed 1 # mirror the crew's deals into a private BAND room (needs BAND_API_KEY in .env)
+IMAGE_GENERATOR=runware pnpm assets  # regenerate billboard art with Runware (needs RUNWARE_API_KEY); kept unless --force
 pnpm capture -- --frames 200 --seed 1  # synthetic labelled dataset (see below); writes data/captures/<run>/
 ```
 
@@ -44,6 +45,7 @@ It runs at about 1.5 frames/s on a CPU (SwiftShader). It makes no realism claim:
 
 ## Decisions the spec left open
 
+- **Runware art.** Generated at build time, never at runtime, so players never wait on or pay for images and the game runs with no key. The PNGs and `manifest.json` are committed so a fresh clone shows the art. Six rooftop billboards on the Second Street buildings and one at the car park face the road; the spec lists 6 billboards among its props, and those are the first props in the world. The model is Qwen-Image because it spells headlines correctly; the docs' example model did not.
 - **BAND crew channel.** The spec gives BAND only an interface name, so the channel is a mirror: the server, the authority, posts crew whispers, deals and betrayals into one private Band room per session, created by a dedicated NeonBayCrew agent. The room adds the agent's owner, because Band requires every message to @mention someone. Bribes and anything involving cops stay out of it. Posting is queued and fire-and-forget, so Band being slow or down never stalls a tick. `.env` at the repo root is loaded by the server, agents and sim entry points with `process.loadEnvFile`.
 - **M6 money.** Crew start with 10,000 clean cash so stakes can be bought in `prepare`; cops start with 0. `launder` converts all dirty cash at the nightclub entrance (8 m), in any phase from plan to payout. `EXPLOIT_ENABLED` defaults to on, so the griefer has something to find; set it to `false` to close it.
 - **M6 exchange.** `buy_stake` and `sell_stake` amounts are cash values, traded at the exchange office. Orders fill at the price after their own impact, so a player can't pump a stake and sell it back at a profit; otherwise that would be a second, unplanned money printer. The crash happens once a session and ramps linearly over 10 s.

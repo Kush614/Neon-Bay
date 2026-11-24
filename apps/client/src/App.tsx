@@ -6,6 +6,7 @@ import { RemotePlayers } from "./entities/RemotePlayers.js";
 import { Vehicles } from "./entities/Vehicles.js";
 import { Lighting } from "./scene/Lighting.js";
 import { World } from "./scene/World.js";
+import { Billboards } from "./scene/Billboards.js";
 import { AmbientTraffic } from "./capture/AmbientTraffic.js";
 import { CaptureRig } from "./capture/CaptureRig.js";
 import { CAPTURE } from "./capture/mode.js";
@@ -22,6 +23,7 @@ export function App() {
           <Physics timeStep={1 / 60} gravity={[0, 0, 0]} interpolate={false}>
             <Lighting />
             <World />
+            <Billboards />
             <LocalPlayer />
             <RemotePlayers />
             <Vehicles />

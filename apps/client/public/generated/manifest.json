@@ -1,0 +1,65 @@
+{
+  "generatedAt": "2026-11-24T01:55:42.925Z",
+  "assets": [
+    {
+      "id": "billboard_harbor_cola",
+      "kind": "billboard",
+      "path": "/generated/billboard_harbor_cola.png",
+      "prompt": "Flat 2D advertisement poster artwork that fills the entire frame edge to edge, 1986 retro airbrush style, sunset gradient in hot pink and teal. Big bold chrome lettering reads \"HARBOR COLA\" and below it smaller neon script text reads \"Taste the Tide\". A sweating glass bottle of pink grapefruit soda on the right, palm silhouettes. No people, no frame, no building, no photo, no other text.",
+      "generator": "runware",
+      "model": "alibaba:qwen-image@3.0",
+      "seed": 2053235213,
+      "costUsd": 0.03
+    },
+    {
+      "id": "billboard_first_coral",
+      "kind": "billboard",
+      "path": "/generated/billboard_first_coral.png",
+      "prompt": "Flat 2D advertisement poster artwork that fills the entire frame edge to edge, 1986 retro airbrush style, sunset gradient in hot pink and teal. Big bold chrome lettering reads \"FIRST CORAL TRUST\" and below it smaller neon script text reads \"Your Money, Sun-Kissed\". A pink coral-shaped vault door and gold coins on the right, ocean horizon. No people, no frame, no building, no photo, no other text.",
+      "generator": "runware",
+      "model": "alibaba:qwen-image@3.0",
+      "seed": 750616925,
+      "costUsd": 0.03
+    },
+    {
+      "id": "billboard_velvet_static",
+      "kind": "billboard",
+      "path": "/generated/billboard_velvet_static.png",
+      "prompt": "Flat 2D advertisement poster artwork that fills the entire frame edge to edge, 1986 retro airbrush style, sunset gradient in hot pink and teal. Big bold chrome lettering reads \"VELVET STATIC 96.6 FM\" and below it smaller neon script text reads \"Synth All Night\". A glowing boombox radio with cyan equalizer bars, a grid horizon. No people, no frame, no building, no photo, no other text.",
+      "generator": "runware",
+      "model": "alibaba:qwen-image@3.0",
+      "seed": 2143981008,
+      "costUsd": 0.03
+    },
+    {
+      "id": "billboard_gatorline",
+      "kind": "billboard",
+      "path": "/generated/billboard_gatorline.png",
+      "prompt": "Flat 2D advertisement poster artwork that fills the entire frame edge to edge, 1986 retro airbrush style, sunset gradient in hot pink and teal. Big bold chrome lettering reads \"GATORLINE MARINE\" and below it smaller neon script text reads \"Outrun Everything\". A sleek white speedboat cutting across teal water with spray, a setting sun. No people, no frame, no building, no photo, no other text.",
+      "generator": "runware",
+      "model": "alibaba:qwen-image@3.0",
+      "seed": 1194661014,
+      "costUsd": 0.03
+    },
+    {
+      "id": "billboard_palmetto_video",
+      "kind": "billboard",
+      "path": "/generated/billboard_palmetto_video.png",
+      "prompt": "Flat 2D advertisement poster artwork that fills the entire frame edge to edge, 1986 retro airbrush style, sunset gradient in hot pink and teal. Big bold chrome lettering reads \"PALMETTO VIDEO\" and below it smaller neon script text reads \"Be Kind, Rewind\". A stack of VHS tapes and a palm tree, purple sky. No people, no frame, no building, no photo, no other text.",
+      "generator": "runware",
+      "model": "alibaba:qwen-image@3.0",
+      "seed": 1237533949,
+      "costUsd": 0.03
+    },
+    {
+      "id": "billboard_seaspray",
+      "kind": "billboard",
+      "path": "/generated/billboard_seaspray.png",
+      "prompt": "Flat 2D advertisement poster artwork that fills the entire frame edge to edge, 1986 retro airbrush style, sunset gradient in hot pink and teal. Big bold chrome lettering reads \"SEASPRAY TELECOM\" and below it smaller neon script text reads \"Call From Anywhere\". A chunky white car phone with a coiled cord, a convertible silhouette on a coastal road. No people, no frame, no building, no photo, no other text.",
+      "generator": "runware",
+      "model": "alibaba:qwen-image@3.0",
+      "seed": 985966891,
+      "costUsd": 0.03
+    }
+  ]
+}
