@@ -37,6 +37,10 @@ export const ActionSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("flee") }),
   z.object({ type: z.literal("report_issue"), issue: IssueSchema }),
   z.object({ type: z.literal("wait") }),
+  z.object({ type: z.literal("arrest"), target: z.string().min(1) }),
+  z.object({ type: z.literal("set_roadblock") }),
+  z.object({ type: z.literal("accept_bribe"), dealId: z.string().min(1) }),
+  z.object({ type: z.literal("call_backup") }),
 ]) satisfies z.ZodType<Action>;
 
 // Compile-time check that the schema covers exactly the Action union.
@@ -45,6 +49,9 @@ const _check: _SchemaMatchesAction = true;
 void _check;
 
 export type ActionType = Action["type"];
+
+/** Actions only cops may take; everyone else gets them rejected. */
+export const COP_ACTIONS: readonly ActionType[] = ["arrest", "set_roadblock", "accept_bribe", "call_backup"];
 
 /** Server -> sender result of an action. */
 export interface ActionResult {

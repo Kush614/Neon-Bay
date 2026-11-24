@@ -14,6 +14,8 @@ export async function createHeadlessSession(opts: {
   /** Write the ledger to SQLite and JSONL (default true). */
   ledger?: boolean;
   phases?: Partial<PhaseConfig>;
+  /** The planted laundering exploit; defaults to the EXPLOIT_ENABLED env var. */
+  exploitEnabled?: boolean;
 }): Promise<{ session: GameSession; close: () => void }> {
   const rapier = await initRapier();
   const nav = await sharedNavGraph();
@@ -25,6 +27,7 @@ export async function createHeadlessSession(opts: {
     output: opts.output,
     ledger,
     phases: { ...DEFAULT_PHASE_CONFIG, minHumans: 0, ...opts.phases },
+    ...(opts.exploitEnabled === undefined ? {} : { exploitEnabled: opts.exploitEnabled }),
   });
   return {
     session,

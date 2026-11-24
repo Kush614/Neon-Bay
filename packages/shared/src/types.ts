@@ -58,7 +58,12 @@ export type Action =
   | { type: "grab_bag" }
   | { type: "flee" }
   | { type: "report_issue"; issue: Issue }
-  | { type: "wait" };
+  | { type: "wait" }
+  // Cop actions (SPEC.md section 11, "Police").
+  | { type: "arrest"; target: PlayerId }
+  | { type: "set_roadblock" }
+  | { type: "accept_bribe"; dealId: string }
+  | { type: "call_backup" };
 
 export interface DealTerms {
   splitPercent: number;

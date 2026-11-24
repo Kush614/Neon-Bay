@@ -1,5 +1,6 @@
 // The vault, bags and the marina (SPEC.md section 11, "Heist").
 import {
+  BAG_PICKUP_RADIUS,
   BAG_VALUE,
   LOCATIONS,
   MARINA_RADIUS,
@@ -50,6 +51,14 @@ const BAG_PHASES: Phase[] = ["heist", "getaway"];
 export function grabBag(state: GameState, p: GamePlayer, pos: XZ): { ok: boolean; reason: string } {
   if (!BAG_PHASES.includes(state.phase)) return { ok: false, reason: `bags can only be taken during the heist or getaway, not ${state.phase}` };
   if (p.role === "cop") return { ok: false, reason: "cops cannot take bags" };
+  if (p.carryingBag) return { ok: false, reason: "you are already carrying a bag" };
+  // A bag dropped in an arrest can be picked up by anyone in the crew.
+  const dropped = state.droppedBags.findIndex((b) => dist(b, pos) <= BAG_PICKUP_RADIUS);
+  if (dropped >= 0) {
+    state.droppedBags.splice(dropped, 1);
+    p.carryingBag = true;
+    return { ok: true, reason: "picked up a dropped bag" };
+  }
   if (!state.vault.open) return { ok: false, reason: "the vault is still closed" };
   if (!atVaultPanel(pos)) return { ok: false, reason: `you must be within ${VAULT_RADIUS} m of the vault` };
   if (p.carryingBag) return { ok: false, reason: "you are already carrying a bag" };

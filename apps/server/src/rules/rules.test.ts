@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { BAG_VALUE, LOCATIONS, PHASE_SECONDS, POINTS_OF_INTEREST, type Role } from "@neon-bay/shared";
-import { createGameState, type GamePlayer, type GameState } from "../game/state.js";
+import { createGameState, newPlayer, type GamePlayer, type GameState } from "../game/state.js";
 import { acceptDeal, betray, proposeDeal, rejectDeal, settleDeals } from "./deals.js";
 import { bankAtMarina, grabBag, vaultTick } from "./heist.js";
 import { advancePhase, DEFAULT_PHASE_CONFIG, enterPhase } from "./phases.js";
 import { computeScores } from "./score.js";
 
 function player(id: string, role: Role, kind: "human" | "agent" = "agent"): GamePlayer {
-  return { id, name: id, kind, role, persona: "none", ready: false, dirtyCash: 0, cleanCash: 0, carryingBag: false, arrested: false, score: 0 };
+  return newPlayer({ id, name: id, kind, role, persona: "none" });
 }
 
 function stateWith(...players: GamePlayer[]): GameState {

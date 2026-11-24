@@ -71,7 +71,11 @@ export const JoinOptionsSchema = z.object({
 /** Per-player events pushed by the server. */
 export type PlayerEvent =
   | { type: "arrived"; target: string }
-  | { type: "path_failed"; target: string; reason: string };
+  | { type: "path_failed"; target: string; reason: string }
+  /** To cops only: a tip-off reveals the crew's positions for this many seconds. */
+  | { type: "crew_revealed"; seconds: number; byName: string }
+  /** To the cop: an arrest attempt ended without an arrest. */
+  | { type: "arrest_failed"; targetName: string; reason: string };
 
 /** Session-wide events broadcast to everyone. */
 export type WorldEvent =
@@ -80,7 +84,13 @@ export type WorldEvent =
   | { type: "vault_opened"; byName: string }
   | { type: "bag_banked"; byName: string; bagsBanked: number }
   | { type: "deals_settled"; count: number }
-  | { type: "scores"; scores: { id: string; name: string; score: number }[] };
+  | { type: "scores"; scores: { id: string; name: string; score: number }[] }
+  | { type: "market_crash"; totalCleanCash: number }
+  | { type: "arrest"; targetId: string; targetName: string; byName: string; seconds: number; droppedBag: boolean }
+  | { type: "released"; targetId: string; targetName: string }
+  | { type: "roadblock"; id: string; byName: string; x: number; z: number; seconds: number }
+  | { type: "roadblock_cleared"; id: string }
+  | { type: "backup"; byId: string; byName: string; x: number; z: number };
 
 export type DealStatus = "pending" | "accepted" | "rejected" | "void" | "settled";
 
@@ -95,5 +105,9 @@ export interface DealView {
   note: string;
   status: DealStatus;
   settledAmount: number;
+  /** A deal offered to a cop is a bribe, paid at once when the cop accepts it. */
+  bribe: boolean;
+  /** For a pending bribe: what it is worth now. */
+  bribeAmount: number;
 }
 export type JoinOptions = z.input<typeof JoinOptionsSchema>;

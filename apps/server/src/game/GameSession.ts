@@ -8,6 +8,7 @@ import {
   LEDGER_PANEL_ROWS,
   MAX_PLAYERS,
   MSG,
+  STARTING_CLEAN_CASH,
   VAULT_BAGS,
   spawnPoint,
   type Action,
@@ -25,16 +26,27 @@ import {
 import type { Rapier } from "@neon-bay/shared/physics";
 import type { LedgerWriter } from "../ledger/LedgerWriter.js";
 import { settleDeals } from "../rules/deals.js";
+import { exchangeTick, stakeValue, totalCleanCash } from "../rules/exchange.js";
 import { atVaultPanel, bankAtMarina, vaultTick } from "../rules/heist.js";
+import { bribeAmount, isBribe, policeTick, type Positions } from "../rules/police.js";
 import { advancePhase, DEFAULT_PHASE_CONFIG, type PhaseConfig } from "../rules/phases.js";
 import { computeScores } from "../rules/score.js";
 import type { NavGraph } from "../sim/navmesh.js";
 import { Simulation } from "../sim/Simulation.js";
 import { applyAction } from "./actions.js";
-import { createGameState, type Deal, type GamePlayer, type GameState } from "./state.js";
+import { createGameState, newPlayer, type Deal, type GamePlayer, type GameState, type Roadblock } from "./state.js";
 
 /** How long a player shows as speaking after a line, until M7 drives this from real audio. */
 const SPEAKING_SECONDS = 2.5;
+/** How often a cop making an arrest re-paths toward the target. */
+const CHASE_REPATH_SECONDS = 0.5;
+/** A roadblock barrier: 10 m across the road. */
+const ROADBLOCK_HALF = { x: 5, y: 0.6, z: 0.4 };
+
+/** EXPLOIT_ENABLED defaults on so the griefer has something to find; set it to "false" to close it. */
+export function exploitEnabledFromEnv(env: Record<string, string | undefined> = process.env): boolean {
+  return (env.EXPLOIT_ENABLED ?? "true").toLowerCase() !== "false";
+}
 
 /** Where the session's messages go: Colyseus clients in the room, or in-process agents in the sim. */
 export interface SessionOutput {
@@ -51,6 +63,8 @@ export interface GameSessionOptions {
   phases?: PhaseConfig;
   /** Wall clock for ledger timestamps. */
   now?: () => Date;
+  /** The planted laundering exploit (SPEC.md section 11). Defaults to EXPLOIT_ENABLED. */
+  exploitEnabled?: boolean;
 }
 
 const NO_META: ActionMeta = { reason: "", trustChanges: {}, harness: null, latencyMs: null, citesPastSession: false };
@@ -66,6 +80,7 @@ export class GameSession {
   private readonly speakingUntil = new Map<string, number>();
   private nextSpawn = 0;
   private humanCount = 0;
+  private chaseTimer = 0;
 
   constructor(opts: GameSessionOptions) {
     this.sim = new Simulation(opts.rapier);
@@ -74,7 +89,7 @@ export class GameSession {
     this.ledger = opts.ledger ?? null;
     this.phases = opts.phases ?? DEFAULT_PHASE_CONFIG;
     this.now = opts.now ?? (() => new Date());
-    this.state = createGameState(opts.sessionId, VAULT_BAGS);
+    this.state = createGameState(opts.sessionId, VAULT_BAGS, opts.exploitEnabled ?? exploitEnabledFromEnv());
   }
 
   get phase(): Phase {
@@ -86,20 +101,17 @@ export class GameSession {
   addPlayer(id: string, rawOptions: unknown): GamePlayer {
     const o = JoinOptionsSchema.parse(rawOptions ?? {});
     if (o.kind === "human") this.humanCount++;
-    this.sim.addPlayer(id, spawnPoint("nightclub", this.nextSpawn++ % MAX_PLAYERS));
-    const p: GamePlayer = {
+    const role = o.role ?? (o.kind === "human" ? "human" : "fixer");
+    // Cops start at the police station; everyone else meets at the nightclub.
+    this.sim.addPlayer(id, role === "cop" ? spawnPoint("police_station", this.nextSpawn++ % 2) : spawnPoint("nightclub", this.nextSpawn++ % MAX_PLAYERS));
+    const p = newPlayer({
       id,
       name: o.name ?? (o.kind === "human" ? `Player ${this.humanCount}` : "Agent"),
       kind: o.kind,
-      role: o.role ?? (o.kind === "human" ? "human" : "fixer"),
+      role,
       persona: o.persona ?? "none",
-      ready: false,
-      dirtyCash: 0,
-      cleanCash: 0,
-      carryingBag: false,
-      arrested: false,
-      score: 0,
-    };
+      cleanCash: role === "cop" ? 0 : STARTING_CLEAN_CASH,
+    });
     this.state.players.set(id, p);
     return p;
   }
@@ -108,6 +120,7 @@ export class GameSession {
     const p = this.state.players.get(id);
     // A bag carried out of the session goes back in the vault, so it isn't lost to a disconnect.
     if (p?.carryingBag) this.state.vault.bagsLeft++;
+    for (const [copId, a] of this.state.arrests) if (copId === id || a.targetId === id) this.state.arrests.delete(copId);
     this.speakingUntil.delete(id);
     this.sim.removePlayer(id);
     this.state.players.delete(id);
@@ -232,7 +245,65 @@ export class GameSession {
 
   dealView(d: Deal): DealView {
     const name = (id: string) => this.state.players.get(id)?.name ?? id;
-    return { id: d.id, fromId: d.fromId, fromName: name(d.fromId), toId: d.toId, toName: name(d.toId), splitPercent: d.splitPercent, note: d.note, status: d.status, settledAmount: d.settledAmount };
+    const bribe = isBribe(this.state, d);
+    return {
+      id: d.id,
+      fromId: d.fromId,
+      fromName: name(d.fromId),
+      toId: d.toId,
+      toName: name(d.toId),
+      splitPercent: d.splitPercent,
+      note: d.note,
+      status: d.status,
+      settledAmount: d.settledAmount,
+      bribe,
+      bribeAmount: bribe && d.status === "pending" ? bribeAmount(this.state, d) : 0,
+    };
+  }
+
+  // ---- police hooks used by actions ------------------------------------------
+
+  /** Road edges closed by roadblocks, for drive_to routing. */
+  blockedRoads(): Set<string> {
+    return new Set([...this.state.roadblocks.values()].map((r) => r.edge));
+  }
+
+  positions(): Positions {
+    return {
+      pos: (id) => this.sim.snapshot(id)?.position ?? null,
+      onFoot: (id) => this.sim.has(id) && !this.sim.vehicleOf(id),
+    };
+  }
+
+  /** A cop making an arrest runs at the target; the path is refreshed as the target moves. */
+  chase(copId: string, targetId: string): void {
+    const from = this.sim.snapshot(copId)?.position;
+    const to = this.sim.snapshot(targetId)?.position;
+    if (!from || !to) return;
+    const path = this.nav.path(from, to);
+    if (path) this.sim.setPath(copId, path, this.state.players.get(targetId)?.name ?? targetId, true);
+  }
+
+  onTipOff(by: GamePlayer, alarmRaised: boolean): void {
+    if (alarmRaised) this.world({ type: "alarm", cause: "tip_off" });
+    for (const p of this.state.players.values()) {
+      if (p.role === "cop") this.out.toPlayer(p.id, MSG.event, { type: "crew_revealed", seconds: this.state.revealUntil - this.state.time, byName: by.name });
+    }
+  }
+
+  onRoadblock(by: GamePlayer, rb: Roadblock): void {
+    this.sim.addObstacle(rb.id, rb, ROADBLOCK_HALF, rb.heading);
+    this.world({ type: "roadblock", id: rb.id, byName: by.name, x: rb.x, z: rb.z, seconds: rb.until - this.state.time });
+  }
+
+  onBackup(by: GamePlayer): void {
+    const pos = this.sim.snapshot(by.id)?.position ?? { x: 0, z: 0 };
+    this.world({ type: "backup", byId: by.id, byName: by.name, x: pos.x, z: pos.z });
+  }
+
+  stakeValueOf(id: string): number {
+    const p = this.state.players.get(id);
+    return p ? stakeValue(this.state, p) : 0;
   }
 
   publishDeal(d: Deal): void {
@@ -280,6 +351,35 @@ export class GameSession {
         this.world({ type: "bag_banked", byName: p.name, bagsBanked: s.bagsBanked });
       }
     }
+    if (exchangeTick(s)) this.world({ type: "market_crash", totalCleanCash: totalCleanCash(s) });
+    this.police(dt);
+  }
+
+  private police(dt: number): void {
+    const s = this.state;
+    const name = (id: string) => s.players.get(id)?.name ?? id;
+    const r = policeTick(s, this.positions(), dt);
+    for (const { attempt, droppedBag } of r.arrested) {
+      const target = s.players.get(attempt.targetId)!;
+      this.sim.stop(target.id);
+      this.sim.stop(attempt.copId);
+      if (droppedBag) this.sim.setCarryingBag(target.id, false);
+      this.world({ type: "arrest", targetId: target.id, targetName: target.name, byName: name(attempt.copId), seconds: target.arrestedUntil - s.time, droppedBag: !!droppedBag });
+    }
+    for (const { attempt, reason } of r.failed) {
+      this.sim.stop(attempt.copId);
+      this.out.toPlayer(attempt.copId, MSG.event, { type: "arrest_failed", targetName: name(attempt.targetId), reason });
+    }
+    for (const p of r.released) this.world({ type: "released", targetId: p.id, targetName: p.name });
+    for (const rb of r.clearedRoadblocks) {
+      this.sim.removeObstacle(rb.id);
+      this.world({ type: "roadblock_cleared", id: rb.id });
+    }
+    this.chaseTimer += dt;
+    if (this.chaseTimer >= CHASE_REPATH_SECONDS) {
+      this.chaseTimer = 0;
+      for (const a of s.arrests.values()) this.chase(a.copId, a.targetId);
+    }
   }
 
   private onPhase(phase: Phase): void {
@@ -297,7 +397,9 @@ export class GameSession {
           this.sim.setCarryingBag(p.id, false);
         }
       }
-      computeScores(s);
+      s.droppedBags = [];
+      s.arrests.clear();
+      computeScores(s, (id) => this.stakeValueOf(id));
       this.world({ type: "scores", scores: [...s.players.values()].map((p) => ({ id: p.id, name: p.name, score: p.score })) });
     }
     this.world({ type: "phase", phase, seconds: s.phaseTimeLeft });
@@ -308,7 +410,7 @@ export class GameSession {
     const g = this.state.players.get(id);
     const snap = this.sim.snapshot(id);
     if (!g || !snap) return null;
-    const animation: AnimationName = snap.vehicleId ? "drive" : g.carryingBag && snap.moving ? "carry_bag" : snap.running ? "run" : snap.moving ? "walk" : "idle";
+    const animation: AnimationName = g.arrested ? "hands_up" : snap.vehicleId ? "drive" : g.carryingBag && snap.moving ? "carry_bag" : snap.running ? "run" : snap.moving ? "walk" : "idle";
     return {
       id,
       name: g.name,

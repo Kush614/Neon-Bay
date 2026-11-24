@@ -1,8 +1,11 @@
 // Action validation and dispatch. Every Action is checked against phase, distance and
 // inventory here; a rejected action returns a reason to the sender.
-import { LOCATIONS, type Action, type ActionResult, type LocationId } from "@neon-bay/shared";
+import { COP_ACTIONS, LOCATIONS, type Action, type ActionResult, type LocationId } from "@neon-bay/shared";
 import { acceptDeal, betray, proposeDeal, rejectDeal } from "../rules/deals.js";
+import { buyStake, sellStake } from "../rules/exchange.js";
 import { grabBag } from "../rules/heist.js";
+import { launder } from "../rules/laundering.js";
+import { acceptBribe, callBackup, setRoadblock, startArrest, tipOff } from "../rules/police.js";
 import { roadRoute } from "../sim/vehicles.js";
 import type { GameSession } from "./GameSession.js";
 
@@ -18,9 +21,6 @@ export function resolveTarget(target: LocationId | { x: number; z: number }): { 
   return { point: { x: target.x, z: target.z }, label: `(${target.x.toFixed(0)}, ${target.z.toFixed(0)})` };
 }
 
-/** Actions that arrive in M6 (police, laundering, the exchange). */
-const LATER: Action["type"][] = ["tip_off_police", "launder", "buy_stake", "sell_stake"];
-
 export function applyAction(session: GameSession, playerId: string, action: Action): ActionResult {
   const state = session.state;
   const player = state.players.get(playerId);
@@ -30,6 +30,8 @@ export function applyAction(session: GameSession, playerId: string, action: Acti
     return result(action, false, "you are arrested and cannot act");
   }
   const sim = session.sim;
+  if (COP_ACTIONS.includes(action.type) && player.role !== "cop") return result(action, false, `only cops can ${action.type.replace("_", " ")}`);
+  const here = () => sim.snapshot(playerId)?.position ?? null;
 
   switch (action.type) {
     case "move_to": {
@@ -56,7 +58,7 @@ export function applyAction(session: GameSession, playerId: string, action: Acti
       }
       const car = sim.vehicleOf(playerId)!;
       const { point, label } = resolveTarget(action.target);
-      const nodes = roadRoute(car.position(), point).map((n) => ({ x: n.x, z: n.z }));
+      const nodes = roadRoute(car.position(), point, session.blockedRoads()).map((n) => ({ x: n.x, z: n.z }));
       const last = nodes[nodes.length - 1]!;
       if (Math.hypot(last.x - point.x, last.z - point.z) < OFF_ROAD_FINISH) nodes.push(point);
       sim.setVehicleRoute(playerId, nodes, label);
@@ -104,10 +106,49 @@ export function applyAction(session: GameSession, playerId: string, action: Acti
       const r = applyAction(session, playerId, target);
       return result(action, r.ok, r.ok ? `fleeing: ${r.reason}` : r.reason);
     }
+    case "launder": {
+      const pos = here();
+      if (!pos) return result(action, false, "player is not in the world");
+      const r = launder(state, player, pos);
+      return result(action, r.ok, r.reason);
+    }
+    case "buy_stake":
+    case "sell_stake": {
+      const pos = here();
+      if (!pos) return result(action, false, "player is not in the world");
+      const r = (action.type === "buy_stake" ? buyStake : sellStake)(state, player, pos, action.business, action.amount);
+      return result(action, r.ok, r.reason);
+    }
+    case "tip_off_police": {
+      const r = tipOff(state, player);
+      if (r.ok) session.onTipOff(player, r.alarmRaised);
+      return result(action, r.ok, r.reason);
+    }
+    case "arrest": {
+      const r = startArrest(state, player, action.target, session.positions());
+      if (r.ok) session.chase(playerId, action.target);
+      return result(action, r.ok, r.reason);
+    }
+    case "accept_bribe": {
+      const r = acceptBribe(state, player, action.dealId);
+      if (r.deal) session.publishDeal(r.deal);
+      return result(action, r.ok, r.reason);
+    }
+    case "set_roadblock": {
+      const pos = here();
+      if (!pos) return result(action, false, "player is not in the world");
+      const r = setRoadblock(state, player, pos);
+      if (r.roadblock) session.onRoadblock(player, r.roadblock);
+      return result(action, r.ok, r.reason);
+    }
+    case "call_backup": {
+      const r = callBackup(state, player);
+      if (r.ok) session.onBackup(player);
+      return result(action, r.ok, r.reason);
+    }
     case "report_issue":
       return result(action, true, "issue recorded");
     default:
-      if (LATER.includes(action.type)) return result(action, false, `${action.type} is not available in this build yet`);
       return result(action, false, `unknown action ${(action as Action).type}`);
   }
 }

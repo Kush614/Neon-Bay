@@ -42,3 +42,36 @@ export const CAR_STEER_RATE = 1.8; // rad/s at speed
 export const CAR_ENTER_RADIUS = 4;
 /** The car body rides this far above the ground; the collider starts here. */
 export const CAR_CLEARANCE = 0.3;
+
+// Money, laundering and the exchange (SPEC.md section 11).
+/** Clean cash every non-cop player starts with, so stakes can be bought in prepare. */
+export const STARTING_CLEAN_CASH = 10_000;
+/** Laundering turns dirty cash into clean at this rate. */
+export const LAUNDER_RATE = 0.8;
+/** Laundering and trading happen within this distance of the nightclub or exchange entrance. */
+export const VENUE_RADIUS = 8;
+export const TIP_OFF_REWARD = 20_000;
+export const TIP_OFF_REVEAL_SECONDS = 30;
+/** Each 1,000 traded moves a stake price by this fraction. */
+export const STAKE_IMPACT_PER_1000 = 0.01;
+export const CRASH_CLEAN_CASH = 600_000;
+export const CRASH_DROP = 0.7;
+export const CRASH_SECONDS = 10;
+
+// Police (SPEC.md section 11).
+export const ARREST_RADIUS = 2;
+export const ARREST_SECONDS = 3;
+export const ARREST_OUT_SECONDS = 30;
+/** A cop can start an arrest this far away; the server then chases the target. */
+export const ARREST_START_RADIUS = 8;
+/** An arrest attempt fails past this distance or after this long. */
+export const ARREST_BREAK_RADIUS = 12;
+export const ARREST_ATTEMPT_SECONDS = 12;
+/** Burke's price (SPEC.md section 13). Rules accept any bribe; personas decide. */
+export const BRIBE_THRESHOLD = 15_000;
+export const ROADBLOCK_SECONDS = 60;
+/** A roadblock must be placed within this distance of a road centreline. */
+export const ROADBLOCK_ROAD_RADIUS = 6;
+export const BACKUP_COOLDOWN_SECONDS = 30;
+/** A dropped bag can be picked up from this close. */
+export const BAG_PICKUP_RADIUS = 2.5;

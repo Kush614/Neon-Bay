@@ -226,8 +226,30 @@ export function nearestRoadNode(p: { x: number; z: number }): RoadNode {
   return best;
 }
 
-/** A* over the road graph from the node nearest `from` to the node nearest `to`. */
-export function roadRoute(from: { x: number; z: number }, to: { x: number; z: number }): RoadNode[] {
+export function edgeKey(a: string, b: string): string {
+  return a < b ? `${a}|${b}` : `${b}|${a}`;
+}
+
+/** The road edge closest to a point: its key, the distance to its centreline, the closest point and its direction. */
+export function nearestRoadEdge(p: { x: number; z: number }): { edge: string; distance: number; x: number; z: number; heading: number } {
+  let best = { edge: "", distance: Infinity, x: 0, z: 0, heading: 0 };
+  for (const [a, b] of ROADS.edges) {
+    const na = nodeById.get(a)!;
+    const nb = nodeById.get(b)!;
+    const dx = nb.x - na.x;
+    const dz = nb.z - na.z;
+    const len2 = dx * dx + dz * dz || 1;
+    const t = Math.max(0, Math.min(1, ((p.x - na.x) * dx + (p.z - na.z) * dz) / len2));
+    const x = na.x + dx * t;
+    const z = na.z + dz * t;
+    const d = Math.hypot(p.x - x, p.z - z);
+    if (d < best.distance) best = { edge: edgeKey(a, b), distance: d, x, z, heading: Math.atan2(dx, dz) };
+  }
+  return best;
+}
+
+/** A* over the road graph from the node nearest `from` to the node nearest `to`, avoiding blocked edges. */
+export function roadRoute(from: { x: number; z: number }, to: { x: number; z: number }, blocked: ReadonlySet<string> = new Set()): RoadNode[] {
   const start = nearestRoadNode(from);
   const goal = nearestRoadNode(to);
   const h = (n: RoadNode) => Math.hypot(n.x - goal.x, n.z - goal.z);
@@ -248,6 +270,7 @@ export function roadRoute(from: { x: number; z: number }, to: { x: number; z: nu
     open.delete(cur);
     const cn = nodeById.get(cur)!;
     for (const nb of adjacency.get(cur) ?? []) {
+      if (blocked.has(edgeKey(cur, nb))) continue;
       const nn = nodeById.get(nb)!;
       const cost = g.get(cur)! + Math.hypot(nn.x - cn.x, nn.z - cn.z);
       if (cost < (g.get(nb) ?? Infinity)) {

@@ -65,6 +65,7 @@ export class Simulation {
   private readonly players = new Map<string, SimPlayer>();
   readonly vehicles = new Map<string, Vehicle>();
   private events: { id: string; event: PlayerEvent }[] = [];
+  private readonly obstacles = new Map<string, RAPIER_NS.RigidBody>();
 
   constructor(private readonly rapier: Rapier) {
     this.world = new rapier.World({ x: 0, y: 0, z: 0 });
@@ -335,6 +336,25 @@ export class Simulation {
     return this.players.get(id)?.speedViolations ?? 0;
   }
 
+  /** A fixed box (a roadblock) that characters and cars collide with. */
+  addObstacle(id: string, at: { x: number; z: number }, half: { x: number; y: number; z: number }, heading: number): void {
+    this.removeObstacle(id);
+    const body = this.world.createRigidBody(
+      this.rapier.RigidBodyDesc.fixed()
+        .setTranslation(at.x, half.y, at.z)
+        .setRotation({ x: 0, y: Math.sin(heading / 2), z: 0, w: Math.cos(heading / 2) }),
+    );
+    this.world.createCollider(this.rapier.ColliderDesc.cuboid(half.x, half.y, half.z), body);
+    this.obstacles.set(id, body);
+  }
+
+  removeObstacle(id: string): void {
+    const body = this.obstacles.get(id);
+    if (!body) return;
+    this.world.removeRigidBody(body);
+    this.obstacles.delete(id);
+  }
+
   teleport(id: string, to: { x: number; z: number }): void {
     this.players.get(id)?.body.teleport(to);
   }
@@ -342,6 +362,7 @@ export class Simulation {
   dispose(): void {
     for (const id of [...this.players.keys()]) this.removePlayer(id);
     for (const v of this.vehicles.values()) v.dispose();
+    for (const id of [...this.obstacles.keys()]) this.removeObstacle(id);
     this.world.free();
   }
 }

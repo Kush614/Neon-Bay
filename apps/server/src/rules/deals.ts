@@ -9,7 +9,8 @@ const DEAL_PHASES: Phase[] = ["plan", "prepare", "heist", "getaway"];
 export function proposeDeal(state: GameState, fromId: string, toId: string, terms: DealTerms): Result {
   if (!DEAL_PHASES.includes(state.phase)) return { ok: false, reason: `deals can only be made from plan to getaway, not ${state.phase}` };
   if (fromId === toId) return { ok: false, reason: "you cannot make a deal with yourself" };
-  if (!state.players.has(toId)) return { ok: false, reason: `no player with id ${toId}` };
+  const to = state.players.get(toId);
+  if (!to) return { ok: false, reason: `no player with id ${toId}` };
   const deal: Deal = {
     id: `deal_${state.nextDealNumber++}`,
     fromId,
@@ -21,6 +22,7 @@ export function proposeDeal(state: GameState, fromId: string, toId: string, term
     settledAmount: 0,
   };
   state.deals.set(deal.id, deal);
+  if (to.role === "cop") return { ok: true, reason: `offered ${to.name} a bribe (${deal.id}): ${terms.splitPercent}% of your cash, paid if they take it`, deal };
   return { ok: true, reason: `proposed ${deal.id}: ${terms.splitPercent}% of your take`, deal };
 }
 
@@ -30,6 +32,7 @@ function respond(state: GameState, playerId: string, dealId: string, to: "accept
   if (!deal) return { ok: false, reason: `no deal ${dealId}` };
   if (deal.toId !== playerId) return { ok: false, reason: "only the player the deal was offered to can answer it" };
   if (deal.status !== "pending") return { ok: false, reason: `deal ${dealId} is already ${deal.status}` };
+  if (to === "accepted" && state.players.get(playerId)?.role === "cop") return { ok: false, reason: `${dealId} is a bribe; use accept_bribe to take it` };
   deal.status = to;
   return { ok: true, reason: `${to} ${dealId}`, deal };
 }
