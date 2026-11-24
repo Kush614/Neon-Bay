@@ -42,6 +42,10 @@ export const InputMessageSchema = z.object({
   x: z.number().finite().min(-1).max(1),
   z: z.number().finite().min(-1).max(1),
   run: z.boolean(),
+  /** In a vehicle: -1 brake/reverse to 1 throttle. */
+  throttle: z.number().finite().min(-1).max(1).optional(),
+  /** In a vehicle: -1 left to 1 right. */
+  steer: z.number().finite().min(-1).max(1).optional(),
 });
 export type InputMessage = z.infer<typeof InputMessageSchema>;
 
