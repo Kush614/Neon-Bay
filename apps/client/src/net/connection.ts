@@ -1,5 +1,14 @@
 import { Client, type Room } from "@colyseus/sdk";
-import { DEFAULT_SERVER_PORT, MSG, ROOM_NAME, type InputMessage, type JoinOptions, type RejectedMessage } from "@neon-bay/shared";
+import {
+  DEFAULT_SERVER_PORT,
+  MSG,
+  ROOM_NAME,
+  type InputMessage,
+  type JoinOptions,
+  type LedgerEntry,
+  type RejectedMessage,
+  type SpeechMessage,
+} from "@neon-bay/shared";
 import { create } from "zustand";
 import { SnapshotBuffer } from "./interpolation.js";
 
@@ -17,6 +26,7 @@ export interface WirePlayer {
 }
 
 interface WireState {
+  sessionId: string;
   phase: string;
   tick: number;
   players: Map<string, WirePlayer>;
@@ -38,7 +48,12 @@ interface NetStore {
   phase: string;
   roster: RosterEntry[];
   lastRejection: RejectedMessage | null;
+  ledgerSessionId: string | null;
+  ledger: LedgerEntry[];
+  speech: (SpeechMessage & { at: number })[];
 }
+
+const LEDGER_KEEP = 200;
 
 export const useNetStore = create<NetStore>(() => ({
   status: "connecting",
@@ -46,6 +61,9 @@ export const useNetStore = create<NetStore>(() => ({
   phase: "lobby",
   roster: [],
   lastRejection: null,
+  ledgerSessionId: null,
+  ledger: [],
+  speech: [],
 }));
 
 /** Per-frame data kept outside React. */
@@ -81,7 +99,9 @@ function onState(state: WireState) {
   const prev = useNetStore.getState();
   const rosterChanged =
     prev.roster.length !== roster.length || prev.roster.some((r, i) => r.id !== roster[i]?.id || r.name !== roster[i]?.name);
-  if (rosterChanged || prev.phase !== state.phase) useNetStore.setState({ roster, phase: state.phase });
+  if (rosterChanged || prev.phase !== state.phase || prev.ledgerSessionId !== state.sessionId) {
+    useNetStore.setState({ roster, phase: state.phase, ledgerSessionId: state.sessionId });
+  }
 }
 
 let connecting: Promise<void> | null = null;
@@ -102,6 +122,14 @@ export function connect(): Promise<void> {
         console.warn(`[net] ${m.type} rejected: ${m.reason}`);
         useNetStore.setState({ lastRejection: m });
       });
+      r.onMessage(MSG.ledger, (entries: LedgerEntry[]) => {
+        useNetStore.setState((s) => ({ ledger: [...s.ledger, ...entries].slice(-LEDGER_KEEP) }));
+      });
+      r.onMessage(MSG.speech, (m: SpeechMessage) => {
+        useNetStore.setState((s) => ({ speech: [...s.speech, { ...m, at: Date.now() }].slice(-20) }));
+      });
+      r.onMessage(MSG.actionResult, () => {});
+      r.onMessage(MSG.event, () => {});
       r.onLeave(() => {
         room = null;
         useNetStore.setState({ status: "offline" });

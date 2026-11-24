@@ -38,7 +38,7 @@ export function HUD() {
         ))}
       </div>
       <div style={{ position: "absolute", bottom: 16, left: 16, padding: "8px 12px", background: "rgba(20,10,30,0.6)", borderRadius: 4, opacity: 0.9 }}>
-        WASD move · Shift run · click or drag to look · Esc release mouse
+        WASD move · Shift run · click or drag to look · Tab ledger · Esc release mouse
       </div>
     </div>
   );

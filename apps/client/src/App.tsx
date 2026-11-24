@@ -6,6 +6,7 @@ import { RemotePlayers } from "./entities/RemotePlayers.js";
 import { Lighting } from "./scene/Lighting.js";
 import { World } from "./scene/World.js";
 import { HUD } from "./ui/HUD.js";
+import { LedgerPanel } from "./ui/LedgerPanel.js";
 
 export function App() {
   return (
@@ -22,6 +23,7 @@ export function App() {
         </Suspense>
       </Canvas>
       <HUD />
+      <LedgerPanel />
     </>
   );
 }
