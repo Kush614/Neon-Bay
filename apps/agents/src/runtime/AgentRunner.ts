@@ -55,6 +55,31 @@ function describeWorld(e: WorldEvent): string {
       return `${e.count} deal(s) settled`;
     case "scores":
       return `final scores: ${e.scores.map((s) => `${s.name} ${s.score}`).join(", ")}`;
+    case "market_crash":
+      return `the market crashed: clean cash in town passed 600,000 (${e.totalCleanCash.toLocaleString("en-US")}); stake prices are falling 70%`;
+    case "arrest":
+      return `${e.byName} arrested ${e.targetName}${e.droppedBag ? ", who dropped a bag" : ""} (out for ${Math.round(e.seconds)} s)`;
+    case "released":
+      return `${e.targetName} was released`;
+    case "roadblock":
+      return `${e.byName} set a roadblock at (${Math.round(e.x)}, ${Math.round(e.z)})`;
+    case "roadblock_cleared":
+      return `a roadblock was cleared`;
+    case "backup":
+      return `${e.byName} called for backup at (${Math.round(e.x)}, ${Math.round(e.z)})`;
+  }
+}
+
+function describeEvent(e: PlayerEvent): string {
+  switch (e.type) {
+    case "arrived":
+      return `arrived at ${e.target}`;
+    case "path_failed":
+      return `could not reach ${e.target}: ${e.reason}`;
+    case "crew_revealed":
+      return `${e.byName} tipped off the police: the crew's positions are visible for ${Math.round(e.seconds)} s`;
+    case "arrest_failed":
+      return `arrest of ${e.targetName} failed: ${e.reason}`;
   }
 }
 
@@ -69,6 +94,8 @@ export class AgentRunner {
   private readonly sessionLog: string[] = [];
   private readonly recentSpeech: { from: string; text: string }[] = [];
   private readonly deals = new Map<string, DealView>();
+  private revealUntil = -Infinity;
+  private backupCall: { from: string; position: { x: number; z: number }; at: number } | null = null;
   readonly decisions: DecisionRecord[] = [];
   private readonly system: string;
   private readonly log: (line: string) => void;
@@ -112,7 +139,8 @@ export class AgentRunner {
       if (!r.ok) this.trigger(); // SPEC: decide immediately when an action is rejected
     });
     t.onMessage(MSG.event, (e: PlayerEvent) => {
-      this.remember(e.type === "arrived" ? `arrived at ${e.target}` : `could not reach ${e.target}: ${e.reason}`);
+      this.remember(describeEvent(e));
+      if (e.type === "crew_revealed") this.revealUntil = this.clock.now() + e.seconds * 1000;
       this.trigger();
     });
     t.onMessage(MSG.speech, (m: SpeechMessage) => {
@@ -127,13 +155,17 @@ export class AgentRunner {
     t.onMessage(MSG.deal, (d: DealView) => {
       this.deals.set(d.id, d);
       const mine = d.fromId === t.sessionId;
-      this.remember(mine ? `deal ${d.id} with ${d.toName} is ${d.status}` : `${d.fromName} offered deal ${d.id} (${d.splitPercent}% of their take): ${d.status}`);
+      const offer = d.bribe ? `a bribe ${d.id} worth ${d.bribeAmount.toLocaleString("en-US")}` : `deal ${d.id} (${d.splitPercent}% of their take)`;
+      this.remember(mine ? `deal ${d.id} with ${d.toName} is ${d.status}` : `${d.fromName} offered ${offer}: ${d.status}`);
       if (!mine && d.status === "pending") this.trigger(); // SPEC: decide when a deal is proposed
     });
     t.onMessage(MSG.world, (e: WorldEvent) => {
       this.remember(describeWorld(e));
-      // SPEC: decide immediately on a phase change or the alarm.
-      if (e.type === "phase" || e.type === "alarm" || e.type === "vault_opened") this.trigger();
+      const cop = this.opts.persona.role === "cop";
+      if (e.type === "backup" && e.byId !== t.sessionId) this.backupCall = { from: e.byName, position: { x: e.x, z: e.z }, at: this.clock.now() };
+      // SPEC: decide immediately on a phase change, the alarm, or being arrested.
+      const arrestedMe = (e.type === "arrest" || e.type === "released") && e.targetId === t.sessionId;
+      if (e.type === "phase" || e.type === "alarm" || e.type === "vault_opened" || e.type === "market_crash" || arrestedMe || (cop && e.type === "backup" && e.byId !== t.sessionId)) this.trigger();
     });
     t.onMessage(MSG.ledger, () => {}); // agents don't render the ledger panel
     t.onMessage(MSG.rejected, () => {});
@@ -183,6 +215,10 @@ export class AgentRunner {
         recentEvents: [...this.sessionLog],
         recentSpeech: [...this.recentSpeech],
         deals: [...this.deals.values()],
+        police: {
+          revealSecondsLeft: Math.max(0, (this.revealUntil - this.clock.now()) / 1000),
+          backupCall: this.backupCall && { from: this.backupCall.from, position: this.backupCall.position, secondsAgo: Math.round((this.clock.now() - this.backupCall.at) / 1000) },
+        },
       });
       if (!observation) return;
       this.lastDecisionAt = this.clock.now();

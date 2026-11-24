@@ -1,5 +1,5 @@
 // In-process transport: agents talk to a GameSession directly, with no network.
-import { MSG, ReadyMessageSchema, type JoinOptions } from "@neon-bay/shared";
+import { BUSINESSES, MSG, ReadyMessageSchema, type BusinessId, type JoinOptions } from "@neon-bay/shared";
 import type { GameSession, SessionOutput } from "@neon-bay/server/headless";
 import type { ObservedState } from "../runtime/observation.js";
 import type { AgentTransport, Connect } from "../runtime/transport.js";
@@ -43,8 +43,12 @@ export class LocalHub {
       vault: { ...g.vault },
       players: [...g.players.keys()].flatMap((id) => {
         const v = s.playerView(id);
-        return v ? [{ ...v, vehicleId: v.vehicleId ?? "" }] : [];
+        return v ? [{ ...v, vehicleId: v.vehicleId ?? "", stakeValue: s.stakeValueOf(id) }] : [];
       }),
+      market: Object.values(BUSINESSES).map((b) => ({ id: b.id, label: b.label, price: g.exchange.base[b.id as BusinessId] * g.exchange.factor })),
+      marketCrashed: g.exchange.crashedAt !== null,
+      roadblocks: [...g.roadblocks.values()].map((r) => ({ id: r.id, x: r.x, z: r.z, heading: r.heading })),
+      droppedBags: g.droppedBags.map((b) => ({ ...b })),
       vehicles: s.sim.vehicleSnapshots().map((v) => ({ id: v.id, label: s.sim.vehicles.get(v.id)!.spec.label, position: v.position, speed: v.speed, driverId: v.driverId ?? "" })),
     };
   }

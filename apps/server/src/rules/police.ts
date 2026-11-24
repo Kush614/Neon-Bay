@@ -62,6 +62,8 @@ export function startArrest(state: GameState, cop: GamePlayer, targetId: string,
   if (!a || !b) return { ok: false, reason: "player is not in the world" };
   const d = dist(a, b);
   if (d > ARREST_START_RADIUS) return { ok: false, reason: `${target.name} is ${d.toFixed(0)} m away; get within ${ARREST_START_RADIUS} m` };
+  // Repeating the order keeps the attempt going instead of restarting the 3 s hold.
+  if (state.arrests.get(cop.id)?.targetId === targetId) return { ok: true, reason: `still arresting ${target.name}` };
   state.arrests.set(cop.id, { copId: cop.id, targetId, held: 0, elapsed: 0 });
   return { ok: true, reason: `arresting ${target.name}: stay within ${ARREST_RADIUS} m of them on foot for ${ARREST_SECONDS} s` };
 }

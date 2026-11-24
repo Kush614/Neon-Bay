@@ -39,7 +39,7 @@ import { createGameState, newPlayer, type Deal, type GamePlayer, type GameState,
 /** How long a player shows as speaking after a line, until M7 drives this from real audio. */
 const SPEAKING_SECONDS = 2.5;
 /** How often a cop making an arrest re-paths toward the target. */
-const CHASE_REPATH_SECONDS = 0.5;
+const CHASE_REPATH_SECONDS = 0.2;
 /** A roadblock barrier: 10 m across the road. */
 const ROADBLOCK_HALF = { x: 5, y: 0.6, z: 0.4 };
 

@@ -34,6 +34,8 @@ export const PlayerSchema = schema(
     ready: t.boolean(),
     /** Final score, filled in when the session ends. */
     score: t.number(),
+    /** Current value of the player's stakes. */
+    stakeValue: t.number(),
   },
   "Player",
 );
@@ -54,6 +56,15 @@ export const VehicleSchema = schema(
 );
 export type VehicleSchema = SchemaType<typeof VehicleSchema>;
 
+export const BusinessSchema = schema({ id: t.string(), label: t.string(), price: t.float32() }, "Business");
+export type BusinessSchema = SchemaType<typeof BusinessSchema>;
+
+export const RoadblockSchema = schema({ id: t.string(), x: t.float32(), z: t.float32(), heading: t.float32() }, "Roadblock");
+export type RoadblockSchema = SchemaType<typeof RoadblockSchema>;
+
+export const DroppedBagSchema = schema({ id: t.string(), x: t.float32(), z: t.float32() }, "DroppedBag");
+export type DroppedBagSchema = SchemaType<typeof DroppedBagSchema>;
+
 export const HeistStateSchema = schema(
   {
     /** Ledger session id; the report and ledger export are keyed by it. */
@@ -70,6 +81,11 @@ export const HeistStateSchema = schema(
     bagsBanked: t.uint8(),
     players: t.map(PlayerSchema),
     vehicles: t.map(VehicleSchema),
+    /** Exchange quotes by business id. */
+    market: t.map(BusinessSchema),
+    marketCrashed: t.boolean(),
+    roadblocks: t.map(RoadblockSchema),
+    droppedBags: t.map(DroppedBagSchema),
   },
   "HeistState",
 );

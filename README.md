@@ -23,7 +23,8 @@ pnpm capture -- --frames 200 --seed 1  # synthetic labelled dataset (see below);
 | M3 First agent | done |
 | M4 Ledger | done |
 | M5 Full crew and rules | done |
-| M6–M10 | not started |
+| M6 Police, laundering, exchange, exploit | done (rules, agents and sync; client HUD for stakes and bribes still to come) |
+| M7–M10 | not started |
 
 ## Synthetic capture demo (outside the spec)
 
@@ -41,6 +42,10 @@ The output is `image_2/` + `label_2/` (KITTI object format), `mask/`, `coco.json
 It runs at about 1.5 frames/s on a CPU (SwiftShader). It makes no realism claim: this is grey-box geometry, so the point is the pipeline, not a training set that transfers to real roads.
 
 ## Decisions the spec left open
+
+- **M6 money.** Crew start with 10,000 clean cash so stakes can be bought in `prepare`; cops start with 0. `launder` converts all dirty cash at the nightclub entrance (8 m), in any phase from plan to payout. `EXPLOIT_ENABLED` defaults to on, so the griefer has something to find; set it to `false` to close it.
+- **M6 exchange.** `buy_stake` and `sell_stake` amounts are cash values, traded at the exchange office. Orders fill at the price after their own impact, so a player can't pump a stake and sell it back at a profit; otherwise that would be a second, unplanned money printer. The crash happens once a session and ramps linearly over 10 s.
+- **M6 police.** Arrests are only possible once the alarm sounds. A cop starts an arrest within 8 m and the server chases the target; the arrest lands after 3 s continuously within 2 m on foot, and fails past 12 m or after 12 s. Arrested players are frozen in place for 30 s and drop their bag on the ground, where anyone in the crew can pick it up. A bribe is a deal offered to a cop, worth splitPercent of the briber's total cash. The cop takes it with `accept_bribe`; it is paid at once, in kind, and that cop can no longer arrest the briber. Burke's 15,000 threshold lives in his persona, not in the rules. `tip_off_police` pays once per player. A roadblock goes on the nearest road edge for 60 s and closes that edge to `drive_to` routing. `call_backup` broadcasts the cop's position, with a 30 s cooldown.
 
 - **TypeScript 6.0, not 7.** `typescript-eslint` 8.74 supports TypeScript below 6.1, so 7.x would break `pnpm lint`.
 - **Rapier pinned to 0.19.2.** That is the version `@react-three/rapier` 2.2 bundles; the server will use the same so prediction and authority run identical physics. Movement lives in `packages/shared/src/physics.ts` and takes the Rapier module as an argument.

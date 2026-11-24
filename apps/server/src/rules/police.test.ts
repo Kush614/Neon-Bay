@@ -46,6 +46,8 @@ describe("police", () => {
     dex.carryingBag = true;
     expect(startArrest(s, vega, "dex", w).ok).toBe(true);
     expect(run(ARREST_SECONDS - 0.2).arrested).toBe(0);
+    // An agent re-issuing the order mid-hold does not reset it.
+    expect(startArrest(s, vega, "dex", w).reason).toMatch(/still arresting/);
     expect(run(0.4).arrested).toBe(1);
     expect(dex.arrested).toBe(true);
     expect(dex.carryingBag).toBe(false);

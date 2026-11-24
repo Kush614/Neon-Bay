@@ -10,7 +10,7 @@ describe("M5: headless session", () => {
     const r = await runSim({ seed: 1 });
     expect(r.completed).toBe(true);
     expect(r.phases).toEqual(["plan", "prepare", "heist", "getaway", "payout", "ended"]);
-    expect(r.scores.map((s) => s.name).sort()).toEqual(["Dex", "Marisol", "Opal", "Rico"]);
+    expect(r.scores.map((s) => s.name).sort()).toEqual(["Burke", "Dex", "Marisol", "Opal", "Rico", "Vega"]);
     for (const s of r.scores) expect(Number.isFinite(s.score)).toBe(true);
     // Every decision reached the ledger, and the stubs actually played the heist.
     expect(r.ledgerRows).toBeGreaterThanOrEqual(r.decisions);

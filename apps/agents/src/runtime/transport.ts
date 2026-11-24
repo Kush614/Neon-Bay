@@ -1,6 +1,6 @@
 // How an agent talks to the game: a Colyseus room in production, a GameSession in the headless sim.
 import { Client, type Room } from "@colyseus/sdk";
-import { ROOM_NAME, type JoinOptions } from "@neon-bay/shared";
+import { ROOM_NAME, type BusinessQuote, type DroppedBagView, type JoinOptions, type RoadblockView } from "@neon-bay/shared";
 import type { ObservedPlayer, ObservedState, ObservedVehicle } from "./observation.js";
 
 export interface AgentTransport {
@@ -27,6 +27,10 @@ interface RoomState {
   bagsLeft: number;
   players: Map<string, ObservedPlayer>;
   vehicles: Map<string, ObservedVehicle>;
+  market: Map<string, BusinessQuote>;
+  marketCrashed: boolean;
+  roadblocks: Map<string, RoadblockView>;
+  droppedBags: Map<string, DroppedBagView>;
 }
 
 export function colyseusConnect(serverUrl: string): Connect {
@@ -42,6 +46,10 @@ export function colyseusConnect(serverUrl: string): Connect {
         vault: { progress: s.vaultProgress, open: s.vaultOpen, bagsLeft: s.bagsLeft },
         players: s.players.values(),
         vehicles: s.vehicles?.values() ?? [],
+        market: s.market?.values() ?? [],
+        marketCrashed: s.marketCrashed,
+        roadblocks: s.roadblocks?.values() ?? [],
+        droppedBags: s.droppedBags?.values() ?? [],
       };
     };
     const hasSelf = () => !!room.state?.players?.get(room.sessionId);

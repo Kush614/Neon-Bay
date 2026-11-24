@@ -74,7 +74,16 @@ export const VAULT_SLOTS: XZ[] = [
  */
 export function heistPlay(obs: Observation, ctx: StubContext, slot: XZ, car: XZ | null): Decision {
   const s = obs.self;
-  if (s.carryingBag) return getaway(obs, ctx, car);
+  if (s.carryingBag) {
+    ctx.memo.hadBag = true;
+    return getaway(obs, ctx, car);
+  }
+  // A banked bag is dirty cash, worth nothing in the score until it is laundered.
+  if (s.dirtyCash > 0) return cashOut(obs, ctx);
+  const bag = obs.droppedBags[0];
+  if (bag) return goTo(obs, ctx, "dropped_bag", bag.position, "Someone dropped a bag; pick it up.", 1.2) ?? decision({ type: "grab_bag" }, "Picking up the dropped bag.");
+  // One bag each: whoever has already carried one heads for the boat.
+  if (ctx.memo.hadBag) return goTo(obs, ctx, "marina", loc(obs, "marina"), "My bag is done; meet the crew at the boat.", 6) ?? wait("At the marina.");
   if (obs.heist.vaultOpen && obs.heist.bagsLeftInVault > 0) {
     const g = goTo(obs, ctx, "vault", slot, "The vault is open; get to it for a bag.", 0.8);
     if (g) return g;
@@ -107,4 +116,9 @@ export function getaway(obs: Observation, ctx: StubContext, car: XZ | null): Dec
 export function acceptOffers(obs: Observation, reason: string, say: string | null = null): Decision | null {
   const offer = obs.pendingDeals.find((d) => d.toId === obs.self.id && d.status === "pending");
   return offer ? decision({ type: "accept", dealId: offer.id }, reason, say) : null;
+}
+
+/** Take dirty cash to the nightclub and launder it. */
+export function cashOut(obs: Observation, ctx: StubContext, reason = "Launder the take at the nightclub."): Decision {
+  return goTo(obs, ctx, "nightclub", loc(obs, "nightclub"), reason, 5) ?? decision({ type: "launder" }, "At the nightclub with dirty cash; launder it.");
 }

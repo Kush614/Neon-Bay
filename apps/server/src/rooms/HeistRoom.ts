@@ -1,6 +1,7 @@
 // Colyseus room: networking around a GameSession. All game logic lives in the session.
 import { Room, type Client, type StepContext } from "colyseus";
 import {
+  BUSINESSES,
   MAX_PLAYERS,
   MSG,
   PATCH_RATE_HZ,
@@ -13,7 +14,8 @@ import { GameSession } from "../game/GameSession.js";
 import { initRapier, sharedNavGraph } from "../game/shared.js";
 import { LedgerWriter } from "../ledger/LedgerWriter.js";
 import { DEFAULT_PHASE_CONFIG } from "../rules/phases.js";
-import { HeistStateSchema, PlayerSchema, Vec3Schema, VehicleSchema } from "../schema.js";
+import { prices } from "../rules/exchange.js";
+import { BusinessSchema, DroppedBagSchema, HeistStateSchema, PlayerSchema, RoadblockSchema, Vec3Schema, VehicleSchema } from "../schema.js";
 
 function sessionIdFor(roomId: string): string {
   const d = new Date();
@@ -75,6 +77,13 @@ export class HeistRoom extends Room<{ state: HeistStateSchema }> {
       s.position = new Vec3Schema();
       s.driverId = "";
       this.state.vehicles.set(v.id, s);
+    }
+    for (const b of Object.values(BUSINESSES)) {
+      const q = new BusinessSchema();
+      q.id = b.id;
+      q.label = b.label;
+      q.price = b.startPrice;
+      this.state.market.set(b.id, q);
     }
     this.sync();
     this.setFixedTimestep((ctx) => this.step(ctx), TICK_RATE_HZ, { subSteps: SUBSTEPS_PER_TICK });
@@ -141,6 +150,25 @@ export class HeistRoom extends Room<{ state: HeistStateSchema }> {
       p.lastInputSeq = this.session.lastInputSeq(p.id);
       p.ready = gp.ready;
       p.score = gp.score;
+      p.stakeValue = this.session.stakeValueOf(p.id);
+    }
+    const quotes = prices(g);
+    for (const [id, q] of s.market) q.price = quotes[id as keyof typeof quotes];
+    s.marketCrashed = g.exchange.crashedAt !== null;
+    for (const id of [...s.roadblocks.keys()]) if (!g.roadblocks.has(id)) s.roadblocks.delete(id);
+    for (const rb of g.roadblocks.values()) {
+      if (s.roadblocks.has(rb.id)) continue;
+      const r = new RoadblockSchema();
+      Object.assign(r, { id: rb.id, x: rb.x, z: rb.z, heading: rb.heading });
+      s.roadblocks.set(rb.id, r);
+    }
+    const bags = new Set(g.droppedBags.map((b) => b.id));
+    for (const id of [...s.droppedBags.keys()]) if (!bags.has(id)) s.droppedBags.delete(id);
+    for (const b of g.droppedBags) {
+      if (s.droppedBags.has(b.id)) continue;
+      const d = new DroppedBagSchema();
+      Object.assign(d, { id: b.id, x: b.x, z: b.z });
+      s.droppedBags.set(b.id, d);
     }
     for (const v of this.session.sim.vehicleSnapshots()) {
       const vs = s.vehicles.get(v.id);

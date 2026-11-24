@@ -1,6 +1,6 @@
 // Network contract between clients, agents and the server.
 import { z } from "zod";
-import type { Phase } from "./types.js";
+import type { BusinessId, Phase } from "./types.js";
 
 export const ROOM_NAME = "heist";
 export const DEFAULT_SERVER_PORT = 2567;
@@ -111,3 +111,25 @@ export interface DealView {
   bribeAmount: number;
 }
 export type JoinOptions = z.input<typeof JoinOptionsSchema>;
+
+/** Public exchange quote. */
+export interface BusinessQuote {
+  id: BusinessId;
+  label: string;
+  price: number;
+}
+
+/** Things on the map everyone can see. */
+export interface RoadblockView {
+  id: string;
+  x: number;
+  z: number;
+  /** Direction the barrier runs, radians. */
+  heading: number;
+}
+
+export interface DroppedBagView {
+  id: string;
+  x: number;
+  z: number;
+}

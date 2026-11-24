@@ -1,5 +1,5 @@
 // Builds the compact observation an agent sends to the model (SPEC.md section 12, step 1).
-import { CAR_ENTER_RADIUS, LOCATIONS, POINTS_OF_INTEREST, type ActionResult, type DealView, type Phase } from "@neon-bay/shared";
+import { CAR_ENTER_RADIUS, LOCATIONS, POINTS_OF_INTEREST, type ActionResult, type BusinessQuote, type DealView, type DroppedBagView, type Phase, type RoadblockView } from "@neon-bay/shared";
 
 /** Minimal view of the synced room state an agent needs. */
 export interface ObservedPlayer {
@@ -14,6 +14,7 @@ export interface ObservedPlayer {
   carryingBag: boolean;
   arrested: boolean;
   vehicleId: string;
+  stakeValue?: number;
 }
 
 export interface ObservedVehicle {
@@ -31,6 +32,18 @@ export interface ObservedState {
   vault: { progress: number; open: boolean; bagsLeft: number };
   players: Iterable<ObservedPlayer>;
   vehicles: Iterable<ObservedVehicle>;
+  market: Iterable<BusinessQuote>;
+  marketCrashed: boolean;
+  roadblocks: Iterable<RoadblockView>;
+  droppedBags: Iterable<DroppedBagView>;
+}
+
+/** What only cops see: tip-offs, backup calls and their own arrest attempt. */
+export interface PoliceIntel {
+  /** Seconds left on a tip-off; while it runs, `crew` lists every crew member. */
+  crewRevealedSecondsLeft: number;
+  crew: { id: string; name: string; position: { x: number; z: number }; carryingBag: boolean; inCar: boolean; arrested: boolean }[];
+  backupCall: { from: string; position: { x: number; z: number }; secondsAgo: number } | null;
 }
 
 export interface Observation {
@@ -49,9 +62,19 @@ export interface Observation {
     moving: boolean;
     /** The car you are driving, or null on foot. */
     vehicle: string | null;
+    /** Current value of your stakes; it counts toward your score. */
+    stakeValue: number;
   };
+  /** Stake prices at the exchange office; buy_stake/sell_stake there with clean cash. */
+  exchange: { crashed: boolean; quotes: { id: string; label: string; price: number }[] };
+  /** Bags dropped in arrests within 40 m; grab_bag next to one picks it up. */
+  droppedBags: { position: { x: number; z: number }; distance: number }[];
+  /** Police roadblocks; drive_to routes around them. */
+  roadblocks: { position: { x: number; z: number } }[];
+  /** Present only for cops. */
+  police?: PoliceIntel;
   heist: { alarm: boolean; vaultOpen: boolean; vaultProgressPercent: number; bagsLeftInVault: number };
-  nearbyPlayers: { id: string; name: string; kind: string; role: string; distance: number; carryingBag: boolean }[];
+  nearbyPlayers: { id: string; name: string; kind: string; role: string; position: { x: number; z: number }; distance: number; carryingBag: boolean; arrested: boolean; inCar: boolean }[];
   /** Free cars within 40 m. drive_to needs one within reach (canEnter). */
   nearbyCars: { id: string; label: string; position: { x: number; z: number }; distance: number; canEnter: boolean }[];
   recentSpeech: { from: string; text: string }[];
@@ -86,6 +109,8 @@ export function buildObservation(args: {
   trust?: Record<string, number>;
   memorySummary?: string;
   deals?: DealView[];
+  /** Cops only. Seconds left on a tip-off reveal, and the latest backup call. */
+  police?: { revealSecondsLeft: number; backupCall: PoliceIntel["backupCall"] };
 }): Observation | null {
   const players = [...args.state.players];
   const me = players.find((p) => p.id === args.selfId);
@@ -95,7 +120,7 @@ export function buildObservation(args: {
     .map((p) => ({ p, d: Math.hypot(p.position.x - me.position.x, p.position.z - me.position.z) }))
     .filter(({ d }) => d <= NEARBY_RADIUS)
     .sort((a, b) => a.d - b.d)
-    .map(({ p, d }) => ({ id: p.id, name: p.name, kind: p.kind, role: p.role, distance: round(d), carryingBag: p.carryingBag }));
+    .map(({ p, d }) => ({ id: p.id, name: p.name, kind: p.kind, role: p.role, position: { x: round(p.position.x), z: round(p.position.z) }, distance: round(d), carryingBag: p.carryingBag, arrested: p.arrested, inCar: !!p.vehicleId }));
   const cars = [...args.state.vehicles]
     .filter((v) => !v.driverId)
     .map((v) => ({ v, d: Math.hypot(v.position.x - me.position.x, v.position.z - me.position.z) }))
@@ -103,6 +128,22 @@ export function buildObservation(args: {
     .sort((a, b) => a.d - b.d)
     .map(({ v, d }) => ({ id: v.id, label: v.label, position: { x: round(v.position.x), z: round(v.position.z) }, distance: round(d), canEnter: d - 1 <= CAR_ENTER_RADIUS }));
   const vault = args.state.vault;
+  const xz = (p: { x: number; z: number }) => ({ x: round(p.x), z: round(p.z) });
+  const droppedBags = [...args.state.droppedBags]
+    .map((b) => ({ position: xz(b), distance: round(Math.hypot(b.x - me.position.x, b.z - me.position.z)) }))
+    .filter((b) => b.distance <= NEARBY_RADIUS);
+  const reveal = args.police?.revealSecondsLeft ?? 0;
+  const police: PoliceIntel | undefined =
+    me.role === "cop"
+      ? {
+          crewRevealedSecondsLeft: Math.ceil(reveal),
+          crew:
+            reveal > 0
+              ? players.filter((p) => p.role !== "cop").map((p) => ({ id: p.id, name: p.name, position: xz(p.position), carryingBag: p.carryingBag, inCar: !!p.vehicleId, arrested: p.arrested }))
+              : [],
+          backupCall: args.police?.backupCall ?? null,
+        }
+      : undefined;
 
   return {
     phase: args.state.phase as Phase,
@@ -119,7 +160,12 @@ export function buildObservation(args: {
       arrested: me.arrested,
       moving: me.vehicleId ? Math.abs([...args.state.vehicles].find((v) => v.id === me.vehicleId)?.speed ?? 0) > 0.3 : me.animation !== "idle",
       vehicle: me.vehicleId || null,
+      stakeValue: me.stakeValue ?? 0,
     },
+    exchange: { crashed: args.state.marketCrashed, quotes: [...args.state.market].map((q) => ({ id: q.id, label: q.label, price: Math.round(q.price * 100) / 100 })) },
+    droppedBags,
+    roadblocks: [...args.state.roadblocks].map((r) => ({ position: xz(r) })),
+    ...(police ? { police } : {}),
     heist: { alarm: args.state.alarm, vaultOpen: vault.open, vaultProgressPercent: Math.round(vault.progress * 100), bagsLeftInVault: vault.bagsLeft },
     nearbyPlayers: nearby,
     nearbyCars: cars,

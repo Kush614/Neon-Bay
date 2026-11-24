@@ -63,3 +63,31 @@ describe("GameSession", () => {
     close();
   });
 });
+
+describe("GameSession police", () => {
+  it("a cop arrests a crew member walking away, who drops their bag", async () => {
+    const { session, close, sent } = await makeSession();
+    session.addPlayer("cop", { kind: "agent", name: "Vega", role: "cop" });
+    session.addPlayer("dex", { kind: "agent", name: "Dex", role: "muscle" });
+    session.sim.teleport("cop", { x: 4, z: 0 });
+    session.sim.teleport("dex", { x: 4, z: 6 });
+    session.tick(3, DT);
+    session.state.alarm = true;
+    session.state.players.get("dex")!.carryingBag = true;
+    session.sim.setCarryingBag("dex", true); // a bag slows the carrier to 80%
+    expect(session.submit("dex", { type: "move_to", target: { x: 4, y: 0, z: 120 } }).ok).toBe(true);
+    expect(session.submit("cop", { type: "arrest", target: "dex" }).ok).toBe(true);
+    let t = 0;
+    while (!session.state.players.get("dex")!.arrested && t < 12) {
+      session.tick(3, DT);
+      t += 3 * DT;
+    }
+    expect(session.state.players.get("dex")!.arrested).toBe(true);
+    expect(session.state.droppedBags).toHaveLength(1);
+    expect(session.playerView("dex")!.animation).toBe("hands_up");
+    expect(sent.some((m) => m.type === MSG.world && (m.payload as { type: string }).type === "arrest")).toBe(true);
+    // Arrested players cannot act until released.
+    expect(session.submit("dex", { type: "move_to", target: "marina" }).reason).toMatch(/arrested/);
+    close();
+  });
+});
