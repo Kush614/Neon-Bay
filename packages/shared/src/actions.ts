@@ -48,7 +48,8 @@ export type ActionType = Action["type"];
 
 /** Server -> sender result of an action. */
 export interface ActionResult {
-  action: ActionType;
+  /** The action's type, or "invalid" when the message was not a valid Action. */
+  action: ActionType | "invalid";
   ok: boolean;
   /** Why it was rejected, or a short note on success. */
   reason: string;

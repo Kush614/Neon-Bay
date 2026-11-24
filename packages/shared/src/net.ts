@@ -1,5 +1,6 @@
 // Network contract between clients, agents and the server.
 import { z } from "zod";
+import type { Phase } from "./types.js";
 
 export const ROOM_NAME = "heist";
 export const DEFAULT_SERVER_PORT = 2567;
@@ -25,7 +26,18 @@ export const MSG = {
   ledger: "ledger",
   /** Server -> players in earshot: speech. */
   speech: "speech",
+  /** Client -> server: mark this human ready (or not) in the lobby. */
+  ready: "ready",
+  /** Client -> server: get into the nearest free car, or out of the current one. */
+  useVehicle: "use_vehicle",
+  /** Server -> the two parties: a deal was created or changed. */
+  deal: "deal",
+  /** Server -> everyone: something happened to the whole session. */
+  world: "world",
 } as const;
+
+export const ReadyMessageSchema = z.object({ ready: z.boolean() });
+export type ReadyMessage = z.infer<typeof ReadyMessageSchema>;
 
 export interface RejectedMessage {
   /** The message or action type that was rejected. */
@@ -60,4 +72,28 @@ export const JoinOptionsSchema = z.object({
 export type PlayerEvent =
   | { type: "arrived"; target: string }
   | { type: "path_failed"; target: string; reason: string };
+
+/** Session-wide events broadcast to everyone. */
+export type WorldEvent =
+  | { type: "phase"; phase: Phase; seconds: number }
+  | { type: "alarm"; cause: "vault_opened" | "tip_off" }
+  | { type: "vault_opened"; byName: string }
+  | { type: "bag_banked"; byName: string; bagsBanked: number }
+  | { type: "deals_settled"; count: number }
+  | { type: "scores"; scores: { id: string; name: string; score: number }[] };
+
+export type DealStatus = "pending" | "accepted" | "rejected" | "void" | "settled";
+
+/** A deal as its two parties see it. splitPercent is the share of the proposer's take paid to the recipient. */
+export interface DealView {
+  id: string;
+  fromId: string;
+  fromName: string;
+  toId: string;
+  toName: string;
+  splitPercent: number;
+  note: string;
+  status: DealStatus;
+  settledAmount: number;
+}
 export type JoinOptions = z.input<typeof JoinOptionsSchema>;
