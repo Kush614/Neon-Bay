@@ -1,21 +1,190 @@
 # Neon Bay '86
 
-Browser-based 3D co-op heist game where AI agent players double as playtesters. `SPEC.md` is the source of truth; `CLAUDE.md` holds the working rules.
+**A browser-based 3D co-op heist on a sunny 1980s beachfront, where AI agents play alongside humans and every agent doubles as a playtester that explains every decision it makes.**
+
+![Neon Bay from above: art-deco hotels, the beachfront avenue, palms, lifeguard towers and yachts under a clear midday sky](docs/screenshots/hero.jpg)
+
+> Testing an online game needs lots of people playing together, and that's slow and expensive. Neon Bay fills the empty seats with **AI players**. They run a real heist with humans, each with its own personality, and **write down why they do everything they do**. When they hit a bug, a cheat or something confusing, they report it. All of that becomes a **playtest report** a studio can act on the same day.
+
+Built for the Multiplayer AI Hackathon (Track 2). `SPEC.md` is the source of truth and `CLAUDE.md` holds the working rules. The in-game **About** page (`/about.html`) explains the project in plain words, with diagrams.
+
+---
+
+## Contents
+
+- [Screenshots](#screenshots)
+- [What it is](#what-it-is)
+- [How it works](#how-it-works)
+- [The crew: four testing styles](#the-crew-four-testing-styles)
+- [Sponsors and how each one is used](#sponsors-and-how-each-one-is-used)
+- [The world: generated art, real skies, physics](#the-world-generated-art-real-skies-physics)
+- [Quick start](#quick-start)
+- [Controls and URL options](#controls-and-url-options)
+- [Repository layout](#repository-layout)
+- [Status](#status)
+- [Synthetic capture demo](#synthetic-capture-demo-outside-the-spec)
+- [Decisions the spec left open](#decisions-the-spec-left-open)
+
+---
+
+## Screenshots
+
+| | |
+| --- | --- |
+| ![Street level on Second Street: the magenta art-deco nightclub, cast-iron lamps and a blue sky with cumulus](docs/screenshots/street.jpg) | ![An art-deco hotel on the beachfront avenue with traffic and the car park](docs/screenshots/hotels.jpg) |
+| **Second Street at street level.** The nightclub, pawn shop and exchange are Runware-generated 3D buildings, fitted exactly to the server's collision boxes. | **Hotel row.** Four generated art-deco hotel designs line the avenue. Ambient traffic brakes for anything in its lane. |
+| ![The beach: sand, palms, a pink lifeguard tower, walkers with a dog and yachts on turquoise water](docs/screenshots/beach.jpg) | ![Road-work cones knocked flying across Second Street, with the police station behind](docs/screenshots/physics.jpg) |
+| **The beach.** Generated palms sway, lifeguard towers and yachts sit on a shader ocean, and NPC beachgoers walk their dogs. | **Physics.** Bins, cones, crates and beach balls are real rigid bodies: cars, players and pedestrians knock them around. |
+| ![Third-person gameplay: the player in a Hawaiian shirt, the HUD, the Sal help bot and the minimap](docs/screenshots/gameplay.jpg) | ![The full labelled map overlay](docs/screenshots/map.jpg) |
+| **Playing.** The HUD shows the phase, cash and roster. Sal, the offline help bot (H), answers "how do I…" questions, and the minimap tracks the objective. | **The map (M).** Every location, the crew, police, humans and cars, plus the current objective. |
+| ![The decision ledger panel listing agent actions with their reasons](docs/screenshots/ledger.jpg) | ![The generated people and sports cars lined up in the model viewer](docs/screenshots/models.jpg) |
+| **The decision ledger (Tab).** Every action by every player, human or AI, with the agent's reason attached. | **Generated cast (`/models.html`).** Runware made the people (auto-rigged in the browser) and the sports cars from text prompts. |
+| ![The bay at dusk with neon lit, under a dramatic sunset sky](docs/screenshots/night.jpg) | ![The About page: Neon Bay '86, a one-minute summary and section navigation](docs/screenshots/about.jpg) |
+| **Optional day-to-night mode (`?tod=cycle`).** A photographed sunset sky, then neon and lit windows at night. | **The About page.** Use cases, a session step by step, how agents learn, what they found, and each sponsor's role. |
+
+---
+
+## What it is
+
+- **A real multiplayer game.** Two or more humans join from a browser. The heist runs through six phases (lobby, plan, prepare, heist, getaway, payout) on a server-authoritative Colyseus server with Rapier physics.
+- **AI players with personalities.** Four crew agents and two police agents join every session. They see only what a player standing there could see, and every action goes through the same server rules as a human's.
+- **Playtesters that explain themselves.** Every decision an agent makes is logged with its reason: *"I took the long way round because the alley was blocked."* Agents also file issues (bugs, exploits, confusion, balance) as they play.
+- **A playtest report.** The ledger flows into a warehouse, and a Bruin pipeline turns it into tables a designer can read: time per phase, issues by type, where players got stuck, winning action sequences, and a heat map.
+
+In recorded runs, agents made **19,477 decisions** and filed **48 issues**. The griefer found the deliberately planted laundering exploit **7 times** without being told it existed.
+
+## How it works
+
+```mermaid
+flowchart LR
+  subgraph Browser
+    C[React Three Fiber client<br/>prediction + interpolation]
+  end
+  subgraph Server["Game server (authoritative)"]
+    S[Colyseus room<br/>GameSession rules + Rapier]
+    L[(Ledger<br/>SQLite + JSONL)]
+  end
+  subgraph Agents["Agent service (one worker per agent)"]
+    A[Observe → decide → act<br/>trust scores, persona goals]
+  end
+  C -- inputs --> S
+  S -- snapshots --> C
+  A -- actions + reasons --> S
+  S -- observations --> A
+  S --> L
+  S -- whispers, deals, betrayals --> BAND[(BAND room)]
+  TELEM[Telem search] -- real headlines --> S
+  L -- session end --> BRUIN[Bruin pipeline<br/>MotherDuck] --> R[Playtest report]
+  RW[Runware] -. build time: images + 3D .-> C
+```
+
+1. **Observe.** Each agent gets a structured observation every tick: its position, nearby players, the phase, the radio, its trust in each player.
+2. **Decide.** A policy picks an action and states why. Tests and offline play use deterministic stub policies; `LLM_PROVIDER=anthropic` swaps in a model.
+3. **Act.** The action goes to the server like a human's input. The server decides what really happens.
+4. **Record.** The action, its reason and the outcome land in the ledger.
+5. **Learn.** Agents keep a 0–100 trust score for every other player: kept promises raise it, betrayals cut it, and it shapes later deals.
+
+## The crew: four testing styles
+
+| Agent | Heist role | Testing style | Optimises for | Reports |
+| --- | --- | --- | --- | --- |
+| **Rico** | Driver | Speedrunner | Finishing as fast as possible | Anything that wastes time |
+| **Marisol** | Hacker (cracks the vault 3× faster) | Explorer | Visiting every place, trying every action | Dead areas and unreachable spots |
+| **Dex** | Muscle | Griefer | Breaking the rules | Exploits and abuse |
+| **Opal** | Fixer | Newcomer | Following instructions literally | Confusing moments and missing feedback |
+| Officers Vega and Burke | Police | — | Catching the crew | — |
+
+## Sponsors and how each one is used
+
+Every sponsor sits behind an interface in `packages/integrations` with a stub, so **the whole game runs offline with no keys**. Each key switches one real service on. Details are in `INTEGRATIONS.md`.
+
+| Sponsor | Job in the game | How it is used | Switch |
+| --- | --- | --- | --- |
+| **Runware** | The art department | Text prompts → nearly every visual: 26 3D models (people with Meshy-6; cars, buildings, boats, palms, a dog and props with Tripo v3.1), rooftop billboards and photo wall textures (Qwen-Image). About **$16** in total, with per-asset cost in the manifests. | `IMAGE_GENERATOR=runware pnpm assets`, `MODEL_GENERATOR=runware pnpm models` |
+| **BAND** | The crew's back room | Each session opens a private BAND room. Whispers, deal offers, accepted deals and betrayals are mirrored there live (never bribes or police chatter). | `CREW_CHANNEL=band` |
+| **Telem** | The radio newsroom | At session start the server searches this week's real coastal news. *Velvet Static 96.6 FM* reads a headline every 45 s, and agents hear it too. | `NEWS_FEED=telem` |
+| **Bruin** | The analyst | The ledger is pushed to MotherDuck. A Bruin Cloud pipeline builds 5 report tables with 17 quality checks, hourly. | `LEDGER_SINK=bruin`, `pnpm bruin:run` |
+
+Not used: Harness Router (its free tier needs a separate provider key first), Finch, Glasser, Casuro and Teamily (no keys). Their stubs remain, so they can be added later without touching the game.
+
+## The world: generated art, real skies, physics
+
+- **Generated with Runware, not downloaded.** Every person, car, building, boat and prop was generated for this project from a prompt in `packages/shared/src/models3d.ts`, so anyone can regenerate them. There are no real brands, car makes or logos. Runware returns static meshes, so the client **auto-rigs** each person (10 bones, heuristic skin weights) and drives a speed-matched walk cycle. Downloads are optimised with glTF-Transform (meshopt + WebP, about 30× smaller); Meshy's dense people are simplified to about 15k triangles.
+- **Real skies.** The bay plays under a photographed CC0 midday sky (Poly Haven HDRI), which provides both the background and the image-based light. The sun's light matches the photo's sun. `?tod=cycle` restores the spec's arc from midday through a photographed sunset to neon night.
+- **Rendering.** A shader ocean with sun glints, reflections on the avenue, N8AO ambient occlusion, bloom on neon, ACES tone mapping, a teal-and-magenta grade, CC0 scanned lamps and bins, and quality presets (`?quality=low|medium|high`).
+- **Ambient life.** Seeded traffic, parked cars, pedestrians and dogs fill the streets. They are client-only scenery, so they never block players or reach the ledger.
+- **Two-layer physics.** Gameplay physics (players, cars, walls) is server-authoritative. On top, the client simulates cosmetic physics:
+  - knockable bins, cones, crates and beach balls (sleeping Rapier rigid bodies);
+  - traffic that brakes and honks;
+  - pedestrians who step aside and get knocked down by fast cars;
+  - boats riding the swell.
+
+  Cosmetic bodies live in their own collision group, which the client's movement prediction ignores, so they can never make prediction disagree with the server. A test covers this.
+- **Sound.** All sound is synthesised in WebAudio: footsteps, car doors, the vault, horns, impacts, barks and an 80s synth loop. K mutes.
+
+## Quick start
+
+Needs Node 22+ and pnpm 10.
 
 ```sh
 pnpm install
+pnpm dev                # server :2567, client http://localhost:5173, plus the six agents
+```
+
+Open http://localhost:5173 in two tabs (or two browsers), press **R** in both, and the heist starts. Running alone? Use `MIN_HUMANS=1 pnpm dev:server` and `pnpm dev:client`.
+
+Optional keys go in `.env` at the repo root (see `.env.example`). It is gitignored, and keys never reach the client bundle.
+
+### All commands
+
+```sh
 pnpm dev               # server on :2567, client on http://localhost:5173, and the agent service
-pnpm dev:client        # client only; runs offline if no server  (?cam=overview for an aerial view, ?name=Ana to pick a name)
-pnpm typecheck && pnpm test
+pnpm dev:client        # client only; runs offline if no server
+pnpm typecheck && pnpm test   # strict TypeScript + 100+ unit tests (stubbed models only)
+pnpm lint
 pnpm e2e               # two-browser smoke test (starts both servers if needed)
-pnpm ledger:export -- --session <id>   # no --session lists recorded sessions
 pnpm sim -- --seed 1   # full headless session (stubbed models unless LLM_PROVIDER says otherwise); -v for a trace
-MIN_HUMANS=1 pnpm dev:server           # let one human start the heist while testing alone (the spec's default is 2)
-CREW_CHANNEL=band pnpm sim -- --seed 1 # mirror the crew's deals into a private BAND room (needs BAND_API_KEY in .env)
-LEDGER_SINK=bruin pnpm sim -- --seed 1 && pnpm bruin:run  # ledger into DuckDB, then Bruin builds the report tables
+pnpm ledger:export -- --session <id>   # no --session lists recorded sessions
+MIN_HUMANS=1 pnpm dev:server           # let one human start the heist (the spec's default is 2)
+CREW_CHANNEL=band pnpm sim -- --seed 1 # mirror the crew's deals into a private BAND room (needs BAND_API_KEY)
+LEDGER_SINK=bruin pnpm sim -- --seed 1 && pnpm bruin:run  # ledger into the warehouse, then Bruin builds the report tables
 NEWS_FEED=telem pnpm sim -- --seed 1 -v # radio bulletins from this week's real headlines via Telem (needs TELEM_API_KEY)
-IMAGE_GENERATOR=runware pnpm assets  # regenerate billboard art with Runware (needs RUNWARE_API_KEY); kept unless --force
+IMAGE_GENERATOR=runware pnpm assets    # regenerate billboards and wall photos with Runware (kept unless --force)
+MODEL_GENERATOR=runware pnpm models    # regenerate 3D models; --only a,b; --reoptimise rebuilds from raw downloads for free
 pnpm capture -- --frames 200 --seed 1  # synthetic labelled dataset (see below); writes data/captures/<run>/
+pnpm fetch:cc0         # re-download the CC0 textures, skies and scanned props (already committed)
+```
+
+## Controls and URL options
+
+**Keys:** WASD move · Shift run · E get in or out of a car · W/S/A/D drive · G grab a bag · Y/N answer a deal · R ready · Tab ledger · M map · H help bot · K mute · Esc release the mouse.
+
+| URL option | Effect |
+| --- | --- |
+| `?name=Ana` | Pick your player name |
+| `?quality=low\|medium\|high` | Rendering preset (low drops reflections, AO and post-effects) |
+| `?tod=cycle` | Day-to-night arc across the session (default: always sunny) |
+| `?tod=0..1` | Pin a time of day (0 is midday, 1 is night) |
+| `?npcs=0` | Turn off ambient traffic, pedestrians and dogs |
+| `?mute=1` | Start muted |
+| `?cam=overview` or `?cam=x,y,z,lookX,lookY,lookZ` | Fixed aerial or pinned camera (screenshots) |
+| `/about.html`, `/models.html` | The About page and the generated-model viewer |
+
+## Repository layout
+
+```text
+apps/
+  client/        React Three Fiber game client: scene, entities, HUD, help bot, audio, cosmetic physics
+  server/        Colyseus server; all rules in src/game/GameSession.ts (no networking), ledger
+  agents/        agent service: one worker per persona, observation → decision → action
+  capture/       synthetic dataset demo (outside the spec)
+packages/
+  shared/        types, world layout, constants, shared physics (the client and server run the same controller)
+  integrations/  sponsor adapters behind interfaces, each with a stub; asset and model generators
+pipelines/
+  neon-bay-ledger/  Bruin pipeline: phase_times, issues, stuck_points, action_sequences, heatmap
+docs/screenshots/   the images above
+SPEC.md · CLAUDE.md · INTEGRATIONS.md · ASSETS.md
 ```
 
 ## Status
@@ -28,7 +197,14 @@ pnpm capture -- --frames 200 --seed 1  # synthetic labelled dataset (see below);
 | M4 Ledger | done |
 | M5 Full crew and rules | done |
 | M6 Police, laundering, exchange, exploit | done (rules, agents and sync; client HUD for stakes and bribes still to come) |
-| M7–M10 | not started |
+| M7 Memory and voice | started: in-session trust scores; cross-session memory and voice not yet |
+| M8 Report and priority-1 adapters | Bruin, BAND and Runware working; Harness Router dropped (needs a provider key) |
+| M9 Art and graphics | done, beyond the spec: Runware 3D for the whole world, real HDRI skies, cosmetic physics |
+| M10 Remaining adapters and polish | started: Telem radio, minimap, help bot, sound, About page |
+
+The laundering exploit (SPEC section 11) is deliberate and stays unfixed: it is what the griefer is meant to find.
+
+**Credits and licences.** Generated art is owned by the project under Runware's terms. Downloaded assets are CC0 from Poly Haven. Every third-party asset is listed in `ASSETS.md`.
 
 ## Synthetic capture demo (outside the spec)
 
