@@ -1,0 +1,118 @@
+{
+  "generatedAt": "2026-11-24T02:57:44.705Z",
+  "models": [
+    {
+      "id": "car_white",
+      "file": "/generated/models/car_white.glb",
+      "kind": "car",
+      "heightMetres": 1.25,
+      "paint": "#f4f1ea",
+      "generator": "runware",
+      "model": "tripo:v3.1@0",
+      "seed": 4987708,
+      "costUsd": 0.5,
+      "prompt": "An original 1980s wedge-shaped two-door sports coupe, low and sleek, sharp creased lines, pop-up headlights, a full-width red tail-light bar across the rear, a small rear wing, black five-spoke alloy wheels, tinted windows, glossy pearl white paint. Realistic game asset. No logos, no badges, no text, no license plate lettering."
+    },
+    {
+      "id": "car_pink",
+      "file": "/generated/models/car_pink.glb",
+      "kind": "car",
+      "heightMetres": 1.25,
+      "paint": "#ff4fa3",
+      "generator": "runware",
+      "model": "tripo:v3.1@0",
+      "seed": 1732517,
+      "costUsd": 0.5,
+      "prompt": "An original 1980s wedge-shaped two-door sports coupe, low and sleek, sharp creased lines, pop-up headlights, a full-width red tail-light bar across the rear, a small rear wing, black five-spoke alloy wheels, tinted windows, glossy hot pink paint. Realistic game asset. No logos, no badges, no text, no license plate lettering."
+    },
+    {
+      "id": "car_teal",
+      "file": "/generated/models/car_teal.glb",
+      "kind": "car",
+      "heightMetres": 1.25,
+      "paint": "#2ec4b6",
+      "generator": "runware",
+      "model": "tripo:v3.1@0",
+      "seed": 18442169,
+      "costUsd": 0.5,
+      "prompt": "An original 1980s wedge-shaped two-door sports coupe, low and sleek, sharp creased lines, pop-up headlights, a full-width red tail-light bar across the rear, a small rear wing, black five-spoke alloy wheels, tinted windows, glossy teal paint. Realistic game asset. No logos, no badges, no text, no license plate lettering."
+    },
+    {
+      "id": "palm",
+      "file": "/generated/models/palm.glb",
+      "kind": "prop",
+      "heightMetres": 9,
+      "generator": "runware",
+      "model": "tripo:v3.1@0",
+      "seed": 12540886,
+      "costUsd": 0.5,
+      "prompt": "A single tall coconut palm tree with a slender, gently curved trunk and a full crown of green fronds. Realistic, game asset, no ground, no pot."
+    },
+    {
+      "id": "rico",
+      "file": "/generated/models/rico.glb",
+      "kind": "character",
+      "heightMetres": 1.8,
+      "generator": "runware",
+      "model": "meshy:meshy@6",
+      "seed": 1668743811,
+      "costUsd": 0.8,
+      "prompt": "Full-body realistic 3D character, a man in his thirties in 1980s beachfront style: a pastel teal linen suit jacket with sleeves pushed up over a white t-shirt, light cream trousers, loafers, aviator sunglasses, short dark hair. Standing straight in an A-pose, arms slightly away from the body, feet apart, facing forward. Realistic proportions and face, game-ready. No logos, no badges, no text, no license plate lettering."
+    },
+    {
+      "id": "marisol",
+      "file": "/generated/models/marisol.glb",
+      "kind": "character",
+      "heightMetres": 1.68,
+      "generator": "runware",
+      "model": "meshy:meshy@6",
+      "seed": 2110443751,
+      "costUsd": 0.8,
+      "prompt": "Full-body realistic 3D character, a woman in her twenties in 1980s style: an oversized denim jacket over a neon pink top, high-waisted light jeans, white high-top sneakers, big curly dark hair. Standing straight in an A-pose, arms slightly away from the body, feet apart, facing forward. Realistic proportions and face, game-ready. No logos, no badges, no text, no license plate lettering."
+    },
+    {
+      "id": "dex",
+      "file": "/generated/models/dex.glb",
+      "kind": "character",
+      "heightMetres": 1.88,
+      "generator": "runware",
+      "model": "meshy:meshy@6",
+      "seed": 2093786793,
+      "costUsd": 0.8,
+      "prompt": "Full-body realistic 3D character, a broad, muscular man in 1980s style: a black sleeveless tank top, a gold chain, dark cargo trousers, heavy boots, a shaved head and stubble. Standing straight in an A-pose, arms slightly away from the body, feet apart, facing forward. Realistic proportions and face, game-ready. No logos, no badges, no text, no license plate lettering."
+    },
+    {
+      "id": "opal",
+      "file": "/generated/models/opal.glb",
+      "kind": "character",
+      "heightMetres": 1.7,
+      "generator": "runware",
+      "model": "meshy:meshy@6",
+      "seed": 929918217,
+      "costUsd": 0.8,
+      "prompt": "Full-body realistic 3D character, a woman in her forties in 1980s style: a white power suit with big shoulder pads, matching trousers, low heels, a short blonde bob haircut. Standing straight in an A-pose, arms slightly away from the body, feet apart, facing forward. Realistic proportions and face, game-ready. No logos, no badges, no text, no license plate lettering."
+    },
+    {
+      "id": "cop",
+      "file": "/generated/models/cop.glb",
+      "kind": "character",
+      "heightMetres": 1.82,
+      "generator": "runware",
+      "model": "meshy:meshy@6",
+      "seed": 1442263594,
+      "costUsd": 0.8,
+      "prompt": "Full-body realistic 3D character, a generic 1980s city police officer: a light blue short-sleeved uniform shirt, navy trousers, a black duty belt, a peaked cap, plain uniform with no badges or patches. Standing straight in an A-pose, arms slightly away from the body, feet apart, facing forward. Realistic proportions and face, game-ready. No logos, no badges, no text, no license plate lettering."
+    },
+    {
+      "id": "tourist",
+      "file": "/generated/models/tourist.glb",
+      "kind": "character",
+      "heightMetres": 1.78,
+      "generator": "runware",
+      "model": "meshy:meshy@6",
+      "seed": 1851761159,
+      "costUsd": 0.8,
+      "prompt": "Full-body realistic 3D character, a man on holiday in 1980s style: a bright floral short-sleeved shirt, khaki shorts, white sneakers, a straw hat. Standing straight in an A-pose, arms slightly away from the body, feet apart, facing forward. Realistic proportions and face, game-ready. No logos, no badges, no text, no license plate lettering."
+    }
+  ]
+}

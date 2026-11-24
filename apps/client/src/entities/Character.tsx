@@ -2,10 +2,12 @@
 // cycle driven by how fast the character actually moves, hair, sunglasses for some, and an
 // outfit chosen from the name so every player looks different. Feet at the group origin.
 import { useFrame } from "@react-three/fiber";
-import { forwardRef, useMemo, useRef } from "react";
+import { forwardRef, Suspense, useMemo, useRef } from "react";
 import { MathUtils, Vector3, type Group } from "three";
 import type { CaptureLabel } from "../capture/mode.js";
 import { NameTag } from "./NameTag.js";
+import { characterModelId, useGeneratedModels } from "../generated/manifest.js";
+import { RiggedPerson } from "../generated/GeneratedPeople.js";
 
 const SKIN = ["#f1c6a0", "#e0a97c", "#c68a5c", "#9b6640", "#6e4528", "#f5d3b8"];
 const HAIR = ["#1d1611", "#3b2416", "#6b3f1f", "#c99a4b", "#e8d6a8", "#8a2a2a", "#2a2a2a"];
@@ -35,10 +37,31 @@ function outfit(name: string) {
 
 const Mat = ({ c, r = 0.75, m = 0 }: { c: string; r?: number; m?: number }) => <meshStandardMaterial color={c} roughness={r} metalness={m} />;
 
-export const Character = forwardRef<Group, { name: string; color: string; bag?: boolean; label?: CaptureLabel; showName?: boolean }>(function Character(
-  { name, color, bag = false, label, showName = true },
-  ref,
-) {
+type CharacterProps = { name: string; color: string; bag?: boolean; label?: CaptureLabel; showName?: boolean };
+
+/** A generated, rigged person when one exists for this player; the procedural figure otherwise. */
+export const Character = forwardRef<Group, CharacterProps>(function Character(props, ref) {
+  const models = useGeneratedModels();
+  const entry = models?.get(characterModelId(props.name));
+  if (!entry) return <ProceduralCharacter ref={ref} {...props} />;
+  const { name, color, bag = false, label, showName = true } = props;
+  return (
+    <group ref={ref} userData={label ? { captureLabel: label } : {}}>
+      <Suspense fallback={null}>
+        <RiggedPerson url={entry.file} height={entry.heightMetres} />
+      </Suspense>
+      {bag && (
+        <mesh position={[0, 1.15, -0.22]} castShadow>
+          <boxGeometry args={[0.42, 0.46, 0.22]} />
+          <meshStandardMaterial color="#3d6b3a" roughness={0.9} />
+        </mesh>
+      )}
+      {showName && <NameTag name={name} color={color} />}
+    </group>
+  );
+});
+
+const ProceduralCharacter = forwardRef<Group, CharacterProps>(function ProceduralCharacter({ name, color, bag = false, label, showName = true }, ref) {
   const o = useMemo(() => outfit(name), [name]);
   const root = useRef<Group>(null);
   const legL = useRef<Group>(null);

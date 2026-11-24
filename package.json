@@ -21,7 +21,8 @@
     "assets": "pnpm --filter @neon-bay/integrations assets",
     "ledger:push": "pnpm --filter @neon-bay/integrations ledger:push",
     "bruin:run": "bruin run pipelines/neon-bay-ledger",
-    "fetch:cc0": "node scripts/fetch-cc0.mjs"
+    "fetch:cc0": "node scripts/fetch-cc0.mjs",
+    "models": "pnpm --filter @neon-bay/integrations models"
   },
   "devDependencies": {
     "@colyseus/better-call": "^1.3.4",

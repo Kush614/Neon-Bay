@@ -4,7 +4,9 @@
 import { MeshReflectorMaterial } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { BANDS, CROSS_STREET_Z, CROSS_STREET_WIDTH, HOTEL_PLOTS, LOCATIONS, SECOND_STREET_ROAD, WORLD_BOUNDS } from "@neon-bay/shared";
-import { useLayoutEffect, useMemo, useRef } from "react";
+import { Suspense, useLayoutEffect, useMemo, useRef } from "react";
+import { useGeneratedModels } from "../generated/manifest.js";
+import { GeneratedPalms, tickPalmSway } from "../generated/GeneratedProps.js";
 import {
   BufferGeometry,
   Color,
@@ -95,6 +97,19 @@ function palmSpots(count: number): { x: number; z: number; s: number; r: number 
 }
 
 export function Palms() {
+  const models = useGeneratedModels();
+  const palm = models?.get("palm");
+  useFrame((_, dt) => tickPalmSway(dt));
+  if (palm)
+    return (
+      <Suspense fallback={null}>
+        <GeneratedPalms entry={palm} count={QUALITY.palms} />
+      </Suspense>
+    );
+  return <ProceduralPalms />;
+}
+
+function ProceduralPalms() {
   const trunkRef = useRef<InstancedMesh>(null);
   const leafRef = useRef<InstancedMesh>(null);
   const { trunk, leaves } = useMemo(palmGeometries, []);

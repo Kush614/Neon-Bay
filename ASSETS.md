@@ -4,6 +4,7 @@ Every third-party asset used in the build, with its source and licence. Assets g
 
 | Asset | Path | Source | Licence | Notes |
 | --- | --- | --- | --- | --- |
+| 3D models: sports car (3 paints), palm, people (Rico, Marisol, Dex, Opal, cop, tourist) | `apps/client/public/generated/models/*.glb` | Generated for this project with Runware `3dInference` (Tripo v3.1, Meshy-6) from the prompts in `packages/shared/src/models3d.ts`; per-model engine, seed and cost in `manifest.json` | Generated output, owned by the project under Runware's terms of service | Original designs: prompts forbid logos, badges and text; no real car make. Rigged in code at load time. Regenerate with `MODEL_GENERATOR=runware pnpm models -- --force`. |
 | Rooftop billboards (6) | `apps/client/public/generated/billboard_*.png` | Generated for this project with Runware (`alibaba:qwen-image@3.0`) from the prompts in `packages/shared/src/assets.ts`; per-image model, seed and cost in `manifest.json` | Generated output, owned by the project under Runware's terms of service | All brands (Harbor Cola, First Coral Trust, Velvet Static 96.6 FM, Gatorline Marine, Palmetto Video, Seaspray Telecom) are invented for Neon Bay. Regenerate with `IMAGE_GENERATOR=runware pnpm assets -- --force`. |
 | World layout and colliders | procedural | `packages/shared/src/world.ts` | Original | |
 | Facades, neon, palms, ocean shader, people, lighting | procedural | `apps/client/src/scene/*`, `entities/Character.tsx` | Original | Canvas-drawn window atlas, vertex-shader palms, procedural ocean normals. |

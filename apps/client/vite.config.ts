@@ -10,7 +10,7 @@ export default defineConfig({
   // Two pages: the game and the About page.
   build: {
     rollupOptions: {
-      input: { main: fileURLToPath(new URL("index.html", import.meta.url)), about: fileURLToPath(new URL("about.html", import.meta.url)) },
+      input: { main: fileURLToPath(new URL("index.html", import.meta.url)), about: fileURLToPath(new URL("about.html", import.meta.url)), models: fileURLToPath(new URL("models.html", import.meta.url)) },
     },
   },
 });

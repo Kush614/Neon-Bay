@@ -6,6 +6,8 @@ import { BruinLedgerSink, BruinReportSource } from "./bruin/warehouse.js";
 import { StubLedgerSink, StubReportSource, type LedgerSink, type ReportSource } from "./ledgerSink.js";
 import { TelemNewsFeed } from "./telem/TelemNewsFeed.js";
 import { RunwareImageGenerator } from "./runware/RunwareImageGenerator.js";
+import { RunwareModelGenerator } from "./runware/RunwareModelGenerator.js";
+import { StubModelGenerator, type ModelGenerator } from "./modelGenerator.js";
 
 export { BandCrewChannel, BandError, type BandCrewChannelOptions } from "./band/BandCrewChannel.js";
 export { formatCrewMessage, StubCrewChannel, type CrewChannel, type CrewMessage, type CrewMessageKind } from "./crewChannel.js";
@@ -32,6 +34,17 @@ export function createImageGenerator(env: Record<string, string | undefined> = p
     (log ?? console.warn)("[image] IMAGE_GENERATOR=runware but RUNWARE_API_KEY is not set; using the stub");
   }
   return new StubImageGenerator(log);
+}
+
+export { StubModelGenerator, type GeneratedModel, type ModelGenerator, type ModelRequest } from "./modelGenerator.js";
+export { RUNWARE_3D_MODELS, RunwareModelGenerator } from "./runware/RunwareModelGenerator.js";
+
+export function createModelGenerator(env: Record<string, string | undefined> = process.env, log?: (line: string) => void): ModelGenerator {
+  if (env.MODEL_GENERATOR === "runware") {
+    if (env.RUNWARE_API_KEY) return new RunwareModelGenerator({ apiKey: env.RUNWARE_API_KEY });
+    (log ?? console.warn)("[model] MODEL_GENERATOR=runware but RUNWARE_API_KEY is not set; using the stub");
+  }
+  return new StubModelGenerator(log);
 }
 
 export { STUB_HEADLINES, StubNewsFeed, type Headline, type NewsFeed } from "./newsFeed.js";

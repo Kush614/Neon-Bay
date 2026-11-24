@@ -2,49 +2,27 @@
 // bumps into them the way the server does.
 import { useFrame } from "@react-three/fiber";
 import { useRapier } from "@react-three/rapier";
-import { useEffect, useRef } from "react";
+import { Suspense, useEffect, useRef } from "react";
 import type { Group } from "three";
 import { CAR_CLEARANCE, CAR_HALF_EXTENTS } from "@neon-bay/shared";
 import { useNetStore, vehicleBuffers, type VehicleEntry } from "../net/connection.js";
+import { SportsCar } from "./SportsCar.js";
+import { useGeneratedModels } from "../generated/manifest.js";
+import { GeneratedCar, nearestCar } from "../generated/GeneratedProps.js";
 
 const H = CAR_HALF_EXTENTS;
 
 type KinematicBody = ReturnType<ReturnType<typeof useRapier>["world"]["createRigidBody"]>;
 
-/** An original boxy 1980s coupe: wedge body, glass cabin, four wheels, neon underglow. */
+/** The car body: a Runware-generated coupe when available, the procedural one otherwise. */
 export function CarModel({ color }: { color: string }) {
-  const wheel = (x: number, z: number) => (
-    <mesh key={`${x},${z}`} position={[x, 0.36, z]} rotation={[0, 0, Math.PI / 2]} castShadow>
-      <cylinderGeometry args={[0.36, 0.36, 0.3, 14]} />
-      <meshStandardMaterial color="#1b1b22" roughness={0.9} />
-    </mesh>
-  );
+  const models = useGeneratedModels();
+  const entry = models && nearestCar(models, color);
+  if (!entry) return <SportsCar color={color} />;
   return (
-    <group>
-      <mesh position={[0, CAR_CLEARANCE + 0.35, 0]} castShadow receiveShadow>
-        <boxGeometry args={[H.x * 2, 0.6, H.z * 2]} />
-        <meshStandardMaterial color={color} metalness={0.35} roughness={0.35} />
-      </mesh>
-      <mesh position={[0, CAR_CLEARANCE + 0.9, -0.25]} castShadow>
-        <boxGeometry args={[H.x * 1.7, 0.5, H.z * 1.0]} />
-        <meshStandardMaterial color="#2a3550" metalness={0.6} roughness={0.15} />
-      </mesh>
-      {/* Pop-up headlights at the front (+z). */}
-      {[-0.6, 0.6].map((x) => (
-        <mesh key={x} position={[x, CAR_CLEARANCE + 0.5, H.z - 0.02]}>
-          <boxGeometry args={[0.45, 0.14, 0.05]} />
-          <meshStandardMaterial color="#fff6d0" emissive="#fff1b0" emissiveIntensity={1.2} />
-        </mesh>
-      ))}
-      <mesh position={[0, 0.08, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[H.x * 2.1, H.z * 2.1]} />
-        <meshBasicMaterial color={color} transparent opacity={0.35} />
-      </mesh>
-      {wheel(-H.x, H.z - 0.7)}
-      {wheel(H.x, H.z - 0.7)}
-      {wheel(-H.x, -H.z + 0.7)}
-      {wheel(H.x, -H.z + 0.7)}
-    </group>
+    <Suspense fallback={<SportsCar color={color} />}>
+      <GeneratedCar entry={entry} />
+    </Suspense>
   );
 }
 

@@ -178,7 +178,7 @@
             <rect x="370" y="410" width="260" height="90" rx="12" fill="#170f26" stroke="#2c2140" stroke-width="2" />
             <text x="500" y="436" fill="#ece6f5" font-size="14" font-weight="700" text-anchor="middle">Integrations (each stubbable)</text>
             <text x="500" y="460" fill="#a99cbf" font-size="12" text-anchor="middle">BAND crew channel · Telem radio news</text>
-            <text x="500" y="480" fill="#a99cbf" font-size="12" text-anchor="middle">Runware billboards · Bruin warehouse</text>
+            <text x="500" y="480" fill="#a99cbf" font-size="12" text-anchor="middle">Runware art + 3D · Bruin warehouse</text>
             <path d="M500 350 L500 408" stroke="#a99cbf" stroke-width="2" stroke-dasharray="4 4" marker-end="url(#a)" />
           </svg>
         </div>
@@ -349,6 +349,8 @@
           <figure><img src="/about/map.jpg" alt="Full navigation map" loading="lazy" /><figcaption>The navigation map (M) shows every location, crew, cops, cars and a guide line to your current objective.</figcaption></figure>
           <figure><img src="/about/help.jpg" alt="Sal the help bot answering how to open the vault" loading="lazy" /><figcaption>Sal, the help bot (H), answers how-to-play questions offline and always knows your next step.</figcaption></figure>
         </div>
+        <h3>3D models generated for this project</h3>
+        <figure><img src="/about/models.jpg" alt="Generated characters, three sports coupes and a palm tree" loading="lazy" /><figcaption>Every person, car and palm was generated with Runware's 3D models (Meshy-6 for people, Tripo v3.1 for props), from prompts in the repo that forbid logos and real makes. Runware returns static meshes, so the game rigs each person in code: it fits a 10-bone skeleton to the A-pose, paints skin weights, and drives a walk cycle from how fast the character actually moves. Live viewer: <a href="/models.html">/models.html</a>.</figcaption></figure>
         <h3>Billboards generated for this project</h3>
         <p>Every brand in the bay is invented. The rooftop billboards were generated at build time with Runware from prompts in the repo.</p>
         <div class="billboards">
@@ -371,7 +373,7 @@
           <tr><td>Agent workers + <code>LlmClient</code></td><td>One thread per agent; Claude or deterministic stub policies</td><td><span class="tag built">Built</span></td></tr>
           <tr><td>BAND</td><td>Private crew channel: whispers, deals and betrayals mirrored to a BAND room</td><td><span class="tag built">Live</span></td></tr>
           <tr><td>Telem</td><td>Live headlines read out on Velvet Static 96.6 FM</td><td><span class="tag built">Live</span></td></tr>
-          <tr><td>Runware</td><td>Build-time billboard art</td><td><span class="tag built">Live</span></td></tr>
+          <tr><td>Runware</td><td>Build-time billboard art and 3D models (people, cars, palms)</td><td><span class="tag built">Live</span></td></tr>
           <tr><td>Bruin + MotherDuck</td><td>Ledger warehouse and the report pipeline, running in Bruin Cloud</td><td><span class="tag built">Live</span></td></tr>
           <tr><td>Cross-session memory · voice</td><td>Milestone M7</td><td><span class="tag planned">Planned</span></td></tr>
         </table>

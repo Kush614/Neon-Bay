@@ -5,3 +5,4 @@ export * from "./net.js";
 export * from "./actions.js";
 export * from "./capture.js";
 export * from "./assets.js";
+export * from "./models3d.js";

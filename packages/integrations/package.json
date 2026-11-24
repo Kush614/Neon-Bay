@@ -9,13 +9,15 @@
   "scripts": {
     "typecheck": "tsc --noEmit -p .",
     "assets": "tsx src/assets.ts",
-    "ledger:push": "tsx src/ledgerPush.ts"
+    "ledger:push": "tsx src/ledgerPush.ts",
+    "models": "tsx src/models.ts"
   },
   "dependencies": {
     "@duckdb/node-api": "1.5.2-r.2",
     "@neon-bay/shared": "workspace:*"
   },
   "devDependencies": {
+    "@gltf-transform/cli": "^4.5.1",
     "tsx": "^4.23.15"
   }
 }
