@@ -319,9 +319,9 @@ export function boundaryWalls(): StaticBox[] {
 }
 
 export function buildingBoxes(): StaticBox[] {
-  const out: StaticBox[] = [];
+  const out: StaticBox[] = [...bankShell()];
   for (const loc of Object.values(LOCATIONS)) {
-    if (loc.height <= 0) continue;
+    if (loc.height <= 0 || loc.id === "bank") continue;
     out.push({ id: loc.id, kind: "building", color: loc.color, visible: true, ...rectBox(loc.footprint, GROUND_Y, loc.height) });
   }
   for (const plot of HOTEL_PLOTS) {
@@ -329,6 +329,106 @@ export function buildingBoxes(): StaticBox[] {
   }
   return out;
 }
+
+// ---------------------------------------------------------------------------
+// Bank interior: a lobby and a vault room inside the bank footprint (SPEC.md section 7).
+
+const BANK_WALL = 0.6;
+export const BANK_DOORS = {
+  /** Front door on Second Street. */
+  front: { x: 8, z: -60, width: 3 },
+  /** Back door onto the service alley at x = 50. */
+  back: { x: 50, z: -68, width: 3 },
+  /** Door between the lobby and the vault room. */
+  vaultRoom: { x: 35, z: -73, width: 3 },
+} as const;
+/** Partition between the lobby (west) and the vault room (east). */
+export const BANK_PARTITION_X = 35;
+
+/** Points agents and rules care about that are not LocationIds. */
+export const POINTS_OF_INTEREST = {
+  vault_panel: { x: 44, z: -76 },
+  bank_lobby: { x: 20, z: -66 },
+  bank_back_door: { x: 53, z: -68 },
+} as const;
+export type PointOfInterestId = keyof typeof POINTS_OF_INTEREST;
+
+/** Wall segments along one axis with a door gap. */
+function wallWithGap(id: string, fixed: number, from: number, to: number, gapAt: number | null, gapWidth: number, axis: "x" | "z", height: number, color: string): StaticBox[] {
+  const spans: [number, number][] = gapAt === null ? [[from, to]] : [[from, gapAt - gapWidth / 2], [gapAt + gapWidth / 2, to]];
+  return spans.map(([a, b], i) => {
+    const r = axis === "z"
+      ? { minX: fixed - BANK_WALL / 2, maxX: fixed + BANK_WALL / 2, minZ: a, maxZ: b }
+      : { minX: a, maxX: b, minZ: fixed - BANK_WALL / 2, maxZ: fixed + BANK_WALL / 2 };
+    return { id: `${id}_${i}`, kind: "building" as const, color, visible: true, ...rectBox(r, GROUND_Y, GROUND_Y + height) };
+  });
+}
+
+export function bankShell(): StaticBox[] {
+  const f = LOCATIONS.bank.footprint;
+  const h = LOCATIONS.bank.height;
+  const c = LOCATIONS.bank.color;
+  const d = BANK_DOORS;
+  return [
+    ...wallWithGap("bank_west", f.minX + BANK_WALL / 2, f.minZ, f.maxZ, d.front.z, d.front.width, "z", h, c),
+    ...wallWithGap("bank_east", f.maxX - BANK_WALL / 2, f.minZ, f.maxZ, d.back.z, d.back.width, "z", h, c),
+    ...wallWithGap("bank_north", f.minZ + BANK_WALL / 2, f.minX, f.maxX, null, 0, "x", h, c),
+    ...wallWithGap("bank_south", f.maxZ - BANK_WALL / 2, f.minX, f.maxX, null, 0, "x", h, c),
+    ...wallWithGap("bank_partition", BANK_PARTITION_X, f.minZ + BANK_WALL, f.maxZ - BANK_WALL, d.vaultRoom.z, d.vaultRoom.width, "z", h * 0.6, "#a8946a"),
+  ];
+}
+
+// ---------------------------------------------------------------------------
+// Road waypoint graph for vehicles (hand-authored, SPEC.md section 3).
+
+export interface RoadNode {
+  id: string;
+  x: number;
+  z: number;
+}
+
+const ROAD_X = { second: 4, alley: 54, avenue: 98 } as const;
+const AVENUE_Z = [-195, -150, -100, -50, 0, 50, 100, 150, 195];
+
+function roadGraph(): { nodes: RoadNode[]; edges: [string, string][] } {
+  const nodes = new Map<string, RoadNode>();
+  const edges: [string, string][] = [];
+  const node = (x: number, z: number) => {
+    const id = `${x},${z}`;
+    if (!nodes.has(id)) nodes.set(id, { id, x, z });
+    return id;
+  };
+  const chain = (pts: [number, number][]) => {
+    for (let i = 1; i < pts.length; i++) edges.push([node(...pts[i - 1]!), node(...pts[i]!)]);
+  };
+  chain(AVENUE_Z.map((z) => [ROAD_X.avenue, z]));
+  chain(AVENUE_Z.map((z) => [ROAD_X.second, z]));
+  for (const z of CROSS_STREET_Z) chain([[ROAD_X.second, z], [ROAD_X.alley, z], [ROAD_X.avenue, z]]);
+  // Beach access through the park wall opening at z = 150, ending near the pier.
+  chain([[ROAD_X.avenue, 150], [140, 150], [186, 178]]);
+  return { nodes: [...nodes.values()], edges };
+}
+
+export const ROADS = roadGraph();
+
+// ---------------------------------------------------------------------------
+// Vehicles: four original boxy cars that spawn at the car park.
+
+export interface CarSpec {
+  id: string;
+  label: string;
+  color: string;
+  spawn: { x: number; z: number; heading: number };
+}
+
+export const CAR_HALF_EXTENTS = { x: 1, y: 0.7, z: 2.2 } as const;
+
+export const CARS: readonly CarSpec[] = [
+  { id: "car_saltwind", label: "Saltwind", color: "#ff5fa2", spawn: { x: 104, z: -9, heading: Math.PI } },
+  { id: "car_duneglider", label: "Duneglider", color: "#3fd0d4", spawn: { x: 104, z: -3, heading: Math.PI } },
+  { id: "car_palmshade", label: "Palmshade", color: "#ffd166", spawn: { x: 104, z: 3, heading: Math.PI } },
+  { id: "car_tidecutter", label: "Tidecutter", color: "#9b7bff", spawn: { x: 104, z: 9, heading: Math.PI } },
+];
 
 export function propBoxes(): StaticBox[] {
   const out: StaticBox[] = [];

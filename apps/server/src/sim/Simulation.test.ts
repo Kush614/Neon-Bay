@@ -82,10 +82,10 @@ describe("Simulation movement authority", () => {
 
   it("collides with buildings on the server", () => {
     const sim = new Simulation(RAPIER);
-    sim.addPlayer("a", LOCATIONS.bank.entrance);
+    sim.addPlayer("a", LOCATIONS.police_station.entrance);
     sim.setInput("a", { seq: 1, x: 1, z: 0, run: true });
     run(sim, 3);
-    expect(sim.snapshot("a")!.position.x).toBeLessThan(LOCATIONS.bank.footprint.minX);
+    expect(sim.snapshot("a")!.position.x).toBeLessThan(LOCATIONS.police_station.footprint.minX);
     sim.dispose();
   });
 });
