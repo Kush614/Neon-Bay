@@ -16,9 +16,11 @@ import {
   type DealView,
   type LedgerEntry,
   type Phase,
+  type PlayerState,
   type RejectedMessage,
   type SpeechMessage,
   type WorldEvent,
+  type AnimationName,
 } from "@neon-bay/shared";
 import type { Rapier } from "@neon-bay/shared/physics";
 import type { LedgerWriter } from "../ledger/LedgerWriter.js";
@@ -299,6 +301,34 @@ export class GameSession {
       this.world({ type: "scores", scores: [...s.players.values()].map((p) => ({ id: p.id, name: p.name, score: p.score })) });
     }
     this.world({ type: "phase", phase, seconds: s.phaseTimeLeft });
+  }
+
+  /** A player as clients see them: game state merged with the simulation. */
+  playerView(id: string): PlayerState | null {
+    const g = this.state.players.get(id);
+    const snap = this.sim.snapshot(id);
+    if (!g || !snap) return null;
+    const animation: AnimationName = snap.vehicleId ? "drive" : g.carryingBag && snap.moving ? "carry_bag" : snap.running ? "run" : snap.moving ? "walk" : "idle";
+    return {
+      id,
+      name: g.name,
+      kind: g.kind,
+      role: g.role,
+      persona: g.persona,
+      position: snap.position,
+      heading: snap.heading,
+      animation,
+      vehicleId: snap.vehicleId,
+      dirtyCash: g.dirtyCash,
+      cleanCash: g.cleanCash,
+      carryingBag: g.carryingBag,
+      arrested: g.arrested,
+      speaking: this.isSpeaking(id),
+    };
+  }
+
+  lastInputSeq(id: string): number {
+    return this.sim.snapshot(id)?.lastSeq ?? -1;
   }
 
   dispose(): void {

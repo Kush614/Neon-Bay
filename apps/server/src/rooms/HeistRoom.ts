@@ -1,41 +1,24 @@
 // Colyseus room: networking around a GameSession. All game logic lives in the session.
-import RAPIER from "@dimforge/rapier3d-compat";
 import { Room, type Client, type StepContext } from "colyseus";
 import {
   MAX_PLAYERS,
   MSG,
   PATCH_RATE_HZ,
   ReadyMessageSchema,
+  SUBSTEPS_PER_TICK,
   TICK_RATE_HZ,
-  type AnimationName,
   type RejectedMessage,
 } from "@neon-bay/shared";
 import { GameSession } from "../game/GameSession.js";
+import { initRapier, sharedNavGraph } from "../game/shared.js";
 import { LedgerWriter } from "../ledger/LedgerWriter.js";
 import { DEFAULT_PHASE_CONFIG } from "../rules/phases.js";
 import { HeistStateSchema, PlayerSchema, Vec3Schema, VehicleSchema } from "../schema.js";
-import { NavGraph } from "../sim/navmesh.js";
 
 function sessionIdFor(roomId: string): string {
   const d = new Date();
   const p = (n: number) => String(n).padStart(2, "0");
   return `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}-${roomId}`;
-}
-
-/** Physics sub-steps per 20 Hz tick, so the server integrates at the client's 60 Hz. */
-const SUB_STEPS = 3;
-
-let rapierReady: Promise<void> | null = null;
-export function initRapier(): Promise<void> {
-  rapierReady ??= RAPIER.init();
-  return rapierReady;
-}
-
-// The navmesh depends only on static world data, so every room shares one.
-let navReady: Promise<NavGraph> | null = null;
-export function sharedNavGraph(): Promise<NavGraph> {
-  navReady ??= NavGraph.build();
-  return navReady;
 }
 
 /** Humans who must be ready before the lobby ends. MIN_HUMANS overrides the spec's 2 for solo testing. */
@@ -69,12 +52,12 @@ export class HeistRoom extends Room<{ state: HeistStateSchema }> {
   }
 
   override async onCreate() {
-    await initRapier();
+    const rapier = await initRapier();
     const nav = await sharedNavGraph();
     this.state.sessionId = sessionIdFor(this.roomId);
     this.ledger = new LedgerWriter(this.state.sessionId);
     this.session = new GameSession({
-      rapier: RAPIER,
+      rapier,
       nav,
       sessionId: this.state.sessionId,
       ledger: this.ledger,
@@ -94,7 +77,7 @@ export class HeistRoom extends Room<{ state: HeistStateSchema }> {
       this.state.vehicles.set(v.id, s);
     }
     this.sync();
-    this.setFixedTimestep((ctx) => this.step(ctx), TICK_RATE_HZ, { subSteps: SUB_STEPS });
+    this.setFixedTimestep((ctx) => this.step(ctx), TICK_RATE_HZ, { subSteps: SUBSTEPS_PER_TICK });
   }
 
   override onJoin(client: Client, rawOptions: unknown) {
@@ -141,23 +124,23 @@ export class HeistRoom extends Room<{ state: HeistStateSchema }> {
     s.bagsLeft = g.vault.bagsLeft;
     s.bagsBanked = g.bagsBanked;
     for (const p of s.players.values()) {
+      const v = this.session.playerView(p.id);
       const gp = g.players.get(p.id);
-      const snap = this.session.sim.snapshot(p.id);
-      if (!gp || !snap) continue;
-      p.position.x = snap.position.x;
-      p.position.y = snap.position.y;
-      p.position.z = snap.position.z;
-      p.heading = snap.heading;
-      p.lastInputSeq = snap.lastSeq;
-      p.vehicleId = snap.vehicleId ?? "";
-      p.speaking = this.session.isSpeaking(p.id);
-      p.dirtyCash = gp.dirtyCash;
-      p.cleanCash = gp.cleanCash;
-      p.carryingBag = gp.carryingBag;
-      p.arrested = gp.arrested;
+      if (!v || !gp) continue;
+      p.position.x = v.position.x;
+      p.position.y = v.position.y;
+      p.position.z = v.position.z;
+      p.heading = v.heading;
+      p.animation = v.animation;
+      p.vehicleId = v.vehicleId ?? "";
+      p.speaking = v.speaking;
+      p.dirtyCash = v.dirtyCash;
+      p.cleanCash = v.cleanCash;
+      p.carryingBag = v.carryingBag;
+      p.arrested = v.arrested;
+      p.lastInputSeq = this.session.lastInputSeq(p.id);
       p.ready = gp.ready;
       p.score = gp.score;
-      p.animation = (snap.vehicleId ? "drive" : gp.carryingBag && snap.moving ? "carry_bag" : snap.running ? "run" : snap.moving ? "walk" : "idle") satisfies AnimationName;
     }
     for (const v of this.session.sim.vehicleSnapshots()) {
       const vs = s.vehicles.get(v.id);

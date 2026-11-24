@@ -1,6 +1,8 @@
 // Gameplay and simulation constants shared by client, server and agents.
 
 export const TICK_RATE_HZ = 20;
+/** Physics sub-steps per server tick, so the server integrates at the client's 60 Hz. */
+export const SUBSTEPS_PER_TICK = 3;
 export const PATCH_RATE_HZ = 20;
 export const INTERPOLATION_DELAY_MS = 100;
 

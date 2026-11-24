@@ -23,6 +23,7 @@
     "tsx": "^4.23.15"
   },
   "exports": {
-    "./app": "./src/app.ts"
+    "./app": "./src/app.ts",
+    "./headless": "./src/headless.ts"
   }
 }
