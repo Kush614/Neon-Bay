@@ -2,6 +2,7 @@ import { Canvas } from "@react-three/fiber";
 import { Physics } from "@react-three/rapier";
 import { Suspense } from "react";
 import { LocalPlayer } from "./entities/LocalPlayer.js";
+import { RemotePlayers } from "./entities/RemotePlayers.js";
 import { Lighting } from "./scene/Lighting.js";
 import { World } from "./scene/World.js";
 import { HUD } from "./ui/HUD.js";
@@ -16,6 +17,7 @@ export function App() {
             <Lighting />
             <World />
             <LocalPlayer />
+            <RemotePlayers />
           </Physics>
         </Suspense>
       </Canvas>
