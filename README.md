@@ -8,6 +8,7 @@ pnpm dev               # server on :2567, client on http://localhost:5173, and t
 pnpm dev:client        # client only; runs offline if no server  (?cam=overview for an aerial view, ?name=Ana to pick a name)
 pnpm typecheck && pnpm test
 pnpm e2e               # two-browser smoke test (starts both servers if needed)
+pnpm ledger:export -- --session <id>   # no --session lists recorded sessions
 ```
 
 ## Status
@@ -17,7 +18,8 @@ pnpm e2e               # two-browser smoke test (starts both servers if needed)
 | M1 Walkable grey-box world | done |
 | M2 Multiplayer | done |
 | M3 First agent | done |
-| M4–M10 | not started |
+| M4 Ledger | done |
+| M5–M10 | not started |
 
 ## Decisions the spec left open
 
@@ -28,3 +30,5 @@ pnpm e2e               # two-browser smoke test (starts both servers if needed)
 - **Netcode.** Clients send a zod-validated `input` message (world-space direction, run flag, sequence number) each physics step while moving, on change, and as a 1 s heartbeat when idle. The server holds the latest input and simulates at 20 Hz with 3 sub-steps of 1/60 s, matching the client's prediction step. Input longer than 1 is clamped, and any per-step horizontal move faster than run speed (or 80% of it with a bag) is reverted and counted. Invalid messages get a `rejected` reply with the reason instead of a disconnect. The client reconciles by comparing the server position with its own prediction at the same input sequence, correcting gradually and snapping beyond 4 m. Colyseus 0.18's built-in `defineInput`/prediction framework was not used.
 - **Colyseus dependency pinning.** `express` and `@colyseus/better-call` are root dev dependencies on purpose. Without them pnpm resolves two peer-variants of `@colyseus/core` (one through `colyseus`, one through `@colyseus/ws-transport`), the transport looks up rooms in a matchmaker that never created them, and every join fails with "seat reservation expired". Do not remove them.
 - **Agents.** `apps/agents` spawns one `worker_threads` worker per persona (`AGENTS=rico` selects which). Each worker joins through `@colyseus/sdk` like a human client and sends only `action` messages. `move_to` becomes a recast navmesh path on the server, built from the same box data as the colliders, and the server steers the agent's body with ordinary movement input, so agents obey the same physics and speed checks as humans. `LLM_PROVIDER=stub` (the default) replays each persona's `stubScript`; real providers arrive with M5.
+- **Ledger rows.** Agents send each action as `{ action, meta }`, where `meta` carries the reason, trust changes, harness, latency and a past-session flag. The server owns tick, phase and position, so it writes the row: one per action received, including `wait` and rejected actions. SQLite also stores the outcome (`ok`, `result`) and the past-session flag beside the spec's `LedgerRow`; the JSONL file holds exactly `LedgerRow`. Humans' rows always have an empty reason and no harness. Data lives in `data/` (override with `NEON_BAY_DATA_DIR`; tests use a temp dir).
+- **Speech.** `say` reaches players within 30 m and `whisper` reaches only its recipient. Both were added in M4, because a model reply with `say` would otherwise be rejected, and a rejection triggers an immediate re-decide.
