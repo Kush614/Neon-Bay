@@ -4,6 +4,10 @@ import { z } from "zod";
 export const ROOM_NAME = "heist";
 export const DEFAULT_SERVER_PORT = 2567;
 export const MAX_PLAYERS = 8;
+/** Speech is heard within this radius (SPEC.md section 15). */
+export const HEARING_RADIUS = 30;
+/** The in-game ledger panel shows this many rows (SPEC.md section 16). */
+export const LEDGER_PANEL_ROWS = 50;
 
 /** Message types. */
 export const MSG = {
@@ -17,6 +21,10 @@ export const MSG = {
   actionResult: "action_result",
   /** Server -> one player: something happened to them (arrived, path failed, ...). */
   event: "event",
+  /** Server -> clients: new ledger entries (and the latest 50 on join). */
+  ledger: "ledger",
+  /** Server -> players in earshot: speech. */
+  speech: "speech",
 } as const;
 
 export interface RejectedMessage {
