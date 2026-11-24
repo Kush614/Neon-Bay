@@ -1,0 +1,16 @@
+# Bruin project config (https://getbruin.com/docs). No secrets here: the MotherDuck token comes
+# from the MOTHERDUCK_TOKEN environment variable. Bruin Cloud uses its own managed connection
+# with the same name, so the pipeline runs unchanged there.
+default_environment: default
+environments:
+  default:
+    connections:
+      duckdb:
+        - name: neon-bay-warehouse
+          path: data/warehouse.duckdb
+  motherduck:
+    connections:
+      motherduck:
+        - name: neon-bay-warehouse
+          token: ${MOTHERDUCK_TOKEN}
+          database: neon_bay
