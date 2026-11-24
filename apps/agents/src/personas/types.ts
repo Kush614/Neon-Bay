@@ -1,5 +1,5 @@
 import type { Persona, Role } from "@neon-bay/shared";
-import type { ScriptedReply } from "../llm/StubLlmClient.js";
+import type { StubPolicy } from "./stubKit.js";
 
 export interface PersonaDef {
   id: string;
@@ -8,8 +8,8 @@ export interface PersonaDef {
   persona: Persona;
   privateGoal: string;
   behaviour: string;
-  /** Replies used when LLM_PROVIDER=stub, so the game is playable without a model. */
-  stubScript: ScriptedReply[];
+  /** Deterministic play used when LLM_PROVIDER=stub and in tests, so the game runs without a model. */
+  stub: StubPolicy;
 }
 
 const ACTION_REFERENCE = `Actions (exactly one per reply, as JSON):
