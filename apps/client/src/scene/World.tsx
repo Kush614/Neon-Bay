@@ -15,6 +15,9 @@ import {
 } from "@neon-bay/shared";
 import { addStaticColliders, removeColliders } from "@neon-bay/shared/physics";
 import { Backdrop } from "./Backdrop.js";
+import { Buildings } from "./Buildings.js";
+import { Ocean } from "./Ocean.js";
+import { Avenue, NeonSigns, Palms, RoadMarkings, StreetLamps } from "./Props.js";
 
 function FlatRect({ r, y, color }: { r: Rect; y: number; color: string }) {
   return (
@@ -39,7 +42,7 @@ export function World() {
   return (
     <group>
       <Backdrop />
-      {BANDS.filter((b) => b.walkable).map((b) => (
+      {BANDS.filter((b) => b.walkable && b.id !== "beachfront_avenue").map((b) => (
         <FlatRect key={b.id} r={{ minX: b.minX, maxX: b.maxX, minZ, maxZ }} y={0} color={b.color} />
       ))}
       <FlatRect r={SECOND_STREET_ROAD} y={0.01} color="#3a3940" />
@@ -49,20 +52,13 @@ export function World() {
       {/* Open-air zones */}
       <FlatRect r={LOCATIONS.car_park.footprint} y={0.03} color={LOCATIONS.car_park.color} />
 
-      {/* Ocean, extended past the playable area to reach the horizon */}
-      <mesh position={[700, WATER_Y, 0]} rotation-x={-Math.PI / 2}>
-        <planeGeometry args={[1004, 2400]} />
-        <meshStandardMaterial color="#1f6f8b" roughness={0.25} metalness={0.1} />
-      </mesh>
-
-      {boxes
-        .filter((b) => b.visible)
-        .map((b) => (
-          <mesh key={b.id} position={[b.center.x, b.center.y, b.center.z]} castShadow receiveShadow>
-            <boxGeometry args={[b.half.x * 2, b.half.y * 2, b.half.z * 2]} />
-            <meshStandardMaterial color={b.color} roughness={0.8} />
-          </mesh>
-        ))}
+      <Ocean />
+      <Avenue />
+      <RoadMarkings />
+      <Buildings boxes={boxes} />
+      <NeonSigns />
+      <StreetLamps />
+      <Palms />
 
       {[...MOORED_BOATS, SPEEDBOAT].map((b) => (
         <mesh key={b.id} position={[b.x, WATER_Y + 0.6, b.z]} castShadow>

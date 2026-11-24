@@ -2,6 +2,7 @@ import { BANDS, CAR_ENTER_RADIUS, LOCATIONS, MIN_HUMANS_TO_START, POINTS_OF_INTE
 import { useEffect, useState } from "react";
 import { useNetStore, vehicleBuffers, type GameInfo, type RosterEntry } from "../net/connection.js";
 import { useLocalStore } from "../store.js";
+import { Minimap } from "./Minimap.js";
 
 function nearestLocation(x: number, z: number) {
   let best = { label: "", d: Infinity };
@@ -114,7 +115,7 @@ export function HUD() {
   const me = roster.find((r) => r.isLocal);
   const hint = useNearHint(p, me, game);
   return (
-    <div style={{ position: "fixed", inset: 0, pointerEvents: "none", fontSize: 14 }}>
+    <div style={{ position: "fixed", inset: 0, zIndex: 16777275, pointerEvents: "none", fontSize: 14 }}>
       <div style={{ position: "absolute", top: 16, left: 16, padding: "10px 14px", background: "rgba(20,10,30,0.72)", borderLeft: "4px solid #ff4fa3", borderRadius: 4, lineHeight: 1.5 }}>
         <div style={{ fontSize: 20, fontWeight: 800, letterSpacing: 1, color: "#ff9bd2" }}>NEON BAY '86</div>
         <div>{band}{near.d < 25 ? ` · near ${near.label}` : ""}</div>
@@ -134,6 +135,7 @@ export function HUD() {
         </div>
       )}
       <Feed />
+      <Minimap />
       <div data-testid="net-status" data-status={status} style={{ position: "absolute", top: 16, right: 16, padding: "10px 14px", background: "rgba(20,10,30,0.72)", borderRight: "4px solid #4fd1ff", borderRadius: 4, lineHeight: 1.5, minWidth: 160 }}>
         <div style={{ fontWeight: 700, color: status === "connected" ? "#7dffb0" : status === "offline" ? "#ffb37d" : "#ffffff" }}>
           {status === "connected" ? "Online" : status === "offline" ? "Offline (local only)" : "Connecting…"}
@@ -150,7 +152,7 @@ export function HUD() {
         ))}
       </div>
       <div style={{ position: "absolute", bottom: 16, left: 16, padding: "8px 12px", background: "rgba(20,10,30,0.6)", borderRadius: 4, opacity: 0.9 }}>
-        WASD move · Shift run · E car · G grab bag · Y/N answer deal · R ready · Tab ledger · Esc release mouse
+        WASD move · Shift run · E car · G grab bag · Y/N answer deal · R ready · Tab ledger · M map · H help · K mute · Esc release mouse
       </div>
     </div>
   );

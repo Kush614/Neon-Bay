@@ -5,6 +5,10 @@ import { LocalPlayer } from "./entities/LocalPlayer.js";
 import { RemotePlayers } from "./entities/RemotePlayers.js";
 import { Vehicles } from "./entities/Vehicles.js";
 import { Lighting } from "./scene/Lighting.js";
+import { DuskLighting, TimeOfDayDriver } from "./scene/DuskLighting.js";
+import { Effects } from "./scene/Effects.js";
+import { NeonDriver } from "./scene/Props.js";
+import { QUALITY } from "./scene/quality.js";
 import { World } from "./scene/World.js";
 import { Billboards } from "./scene/Billboards.js";
 import { AmbientTraffic } from "./capture/AmbientTraffic.js";
@@ -13,15 +17,24 @@ import { CAPTURE } from "./capture/mode.js";
 import { Controls } from "./ui/Controls.js";
 import { HUD } from "./ui/HUD.js";
 import { LedgerPanel } from "./ui/LedgerPanel.js";
+import { HelpBot } from "./ui/HelpBot.js";
 
 export function App() {
   return (
     <>
-      <Canvas shadows="percentage" camera={{ fov: 60, near: 0.1, far: 1200, position: [0, 8, 40] }} gl={{ antialias: true, preserveDrawingBuffer: CAPTURE }}>
+      <Canvas
+        shadows="soft"
+        dpr={QUALITY.dpr}
+        flat={!CAPTURE && QUALITY.postprocessing}
+        camera={{ fov: 60, near: 0.1, far: 1200, position: [0, 8, 40] }}
+        gl={{ antialias: !QUALITY.postprocessing || CAPTURE, preserveDrawingBuffer: CAPTURE, powerPreference: "high-performance" }}
+      >
         <Suspense fallback={null}>
           {/* Gravity is applied by the character controller, not the world. */}
           <Physics timeStep={1 / 60} gravity={[0, 0, 0]} interpolate={false}>
-            <Lighting />
+            {CAPTURE ? <Lighting /> : <DuskLighting />}
+            <TimeOfDayDriver />
+            <NeonDriver />
             <World />
             <Billboards />
             <LocalPlayer />
@@ -30,11 +43,13 @@ export function App() {
             {CAPTURE && <AmbientTraffic />}
             {CAPTURE && <CaptureRig />}
           </Physics>
+          {!CAPTURE && <Effects />}
         </Suspense>
       </Canvas>
       {!CAPTURE && <HUD />}
       {!CAPTURE && <Controls />}
       {!CAPTURE && <LedgerPanel />}
+      {!CAPTURE && <HelpBot />}
     </>
   );
 }
