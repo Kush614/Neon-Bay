@@ -1,0 +1,383 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>About · Neon Bay '86</title>
+    <style>
+      :root {
+        --bg: #0d0818;
+        --panel: #170f26;
+        --line: #2c2140;
+        --text: #ece6f5;
+        --muted: #a99cbf;
+        --pink: #ff4fa3;
+        --cyan: #4fd1ff;
+        --gold: #ffd166;
+        --green: #7dffb0;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif; }
+      a { color: var(--cyan); }
+      header { padding: 72px 24px 48px; text-align: center; background: radial-gradient(ellipse at 50% 0%, #3a1747 0%, var(--bg) 70%); }
+      header h1 { margin: 0; font-size: clamp(36px, 6vw, 64px); letter-spacing: 3px; color: #ff9bd2; text-shadow: 0 0 24px #ff4fa388; }
+      header p { max-width: 720px; margin: 16px auto 0; color: var(--muted); font-size: 19px; }
+      .cta { display: inline-block; margin-top: 28px; padding: 12px 26px; border-radius: 999px; background: var(--pink); color: #fff; font-weight: 800; text-decoration: none; box-shadow: 0 0 24px #ff4fa366; }
+      nav { position: sticky; top: 0; z-index: 5; display: flex; gap: 18px; justify-content: center; flex-wrap: wrap; padding: 10px; background: #0d0818ee; border-bottom: 1px solid var(--line); font-size: 14px; }
+      nav a { color: var(--muted); text-decoration: none; }
+      nav a:hover { color: var(--text); }
+      main { max-width: 1040px; margin: 0 auto; padding: 0 24px 96px; }
+      section { padding-top: 64px; }
+      h2 { font-size: 30px; margin: 0 0 8px; }
+      h2 .n { color: var(--pink); margin-right: 10px; }
+      h3 { margin: 28px 0 6px; font-size: 20px; }
+      .lede { color: var(--muted); font-size: 18px; margin-top: 0; }
+      .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin-top: 20px; }
+      .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px; }
+      .card b { display: block; font-size: 30px; color: var(--gold); line-height: 1.2; }
+      .card span { color: var(--muted); font-size: 14px; }
+      figure { margin: 24px 0; }
+      figure img { width: 100%; border-radius: 12px; border: 1px solid var(--line); display: block; }
+      figcaption { color: var(--muted); font-size: 14px; margin-top: 8px; }
+      .diagram { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
+      .diagram svg { width: 100%; height: auto; display: block; }
+      .two { display: grid; gap: 20px; grid-template-columns: 1fr 1fr; }
+      @media (max-width: 760px) { .two { grid-template-columns: 1fr; } }
+      table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 15px; }
+      th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+      th { color: var(--muted); font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; }
+      .tag { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+      .built { background: #7dffb022; color: var(--green); border: 1px solid #7dffb066; }
+      .planned { background: #ffd16622; color: var(--gold); border: 1px solid #ffd16666; }
+      blockquote { margin: 16px 0; padding: 14px 18px; border-left: 4px solid var(--pink); background: var(--panel); border-radius: 0 10px 10px 0; }
+      blockquote cite { display: block; color: var(--muted); font-style: normal; font-size: 13px; margin-top: 6px; }
+      code { background: #ffffff12; padding: 1px 6px; border-radius: 4px; font-size: 14px; }
+      .gallery { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+      .gallery figure { margin: 0; }
+      .billboards { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); margin-top: 16px; }
+      .billboards img { width: 100%; border-radius: 8px; border: 1px solid var(--line); }
+      footer { text-align: center; color: var(--muted); font-size: 14px; padding: 40px 24px; border-top: 1px solid var(--line); }
+      svg text { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>NEON BAY '86</h1>
+      <p>A co-op heist game on a 1980s beachfront where AI agents play alongside humans, and where every agent is also a playtester that explains every decision it makes.</p>
+      <a class="cta" href="/">Play the game →</a>
+    </header>
+    <nav>
+      <a href="#problem">The problem</a>
+      <a href="#idea">The idea</a>
+      <a href="#how">How it works</a>
+      <a href="#loop">Agent loop</a>
+      <a href="#learn">How it learns</a>
+      <a href="#found">What it found</a>
+      <a href="#world">The world</a>
+      <a href="#stack">Stack</a>
+    </nav>
+    <main>
+      <!-- 1 -->
+      <section id="problem">
+        <h2><span class="n">01</span>The problem</h2>
+        <p class="lede">Multiplayer games break in the gaps between players, and those gaps are the hardest thing to test.</p>
+        <p>
+          A single-player bug shows up when one tester presses the wrong button. A multiplayer bug only shows up when <em>several</em> people do something
+          together: one player stalls while another carries the loot, someone betrays a deal at the worst moment, a griefer repeats an action in a state
+          no designer thought of. Finding these means getting real groups of people to play the same scenario again and again, then interviewing them about
+          what they were thinking.
+        </p>
+        <div class="grid">
+          <div class="card"><b>Expensive</b><span>Every playtest needs a full lobby of humans at the same time, for every build.</span></div>
+          <div class="card"><b>Slow</b><span>Studios wait days for sessions and then weeks for notes and recordings.</span></div>
+          <div class="card"><b>Opaque</b><span>Footage shows <em>what</em> happened. It rarely says <em>why</em> a player chose it.</span></div>
+          <div class="card"><b>Narrow</b><span>Testers play "normally". Exploits come from the few players who don't.</span></div>
+        </div>
+      </section>
+
+      <!-- 2 -->
+      <section id="idea">
+        <h2><span class="n">02</span>The idea</h2>
+        <p class="lede">Fill the empty seats with AI agents that play for real and write down why.</p>
+        <p>
+          In Neon Bay two humans and four AI crew members, plus two AI cops, share one world as equals. Each agent has its own goal and personality, and it can lie,
+          make deals and betray. Each agent is also a playtester with a specific testing style. Every action it takes is written to a <strong>decision ledger</strong>
+          with the agent's own reason. When it notices a bug, exploit, confusing step or balance problem, it files an issue. The ledger then becomes a
+          <strong>playtest report</strong> for the studio. That report is the product; the heist is the test bench.
+        </p>
+        <table>
+          <tr><th>Agent</th><th>Role</th><th>Tests like a…</th><th>Private goal</th><th>What it surfaces</th></tr>
+          <tr><td><b>Rico</b></td><td>driver</td><td>speedrunner</td><td>Finish as fast as possible</td><td>Anything that wastes time</td></tr>
+          <tr><td><b>Marisol</b></td><td>hacker</td><td>explorer</td><td>Visit every place, try every action</td><td>Dead areas and unreachable spots</td></tr>
+          <tr><td><b>Dex</b></td><td>muscle</td><td>griefer</td><td>Find and abuse rule breaks</td><td>Exploits; betrays when it pays</td></tr>
+          <tr><td><b>Opal</b></td><td>fixer</td><td>newcomer</td><td>Follow instructions literally</td><td>Confusing steps; where she got stuck</td></tr>
+          <tr><td><b>Vega</b></td><td>cop</td><td>by the book</td><td>Arrest the crew</td><td>Police pressure and pacing</td></tr>
+          <tr><td><b>Burke</b></td><td>cop</td><td>corrupt</td><td>Get rich</td><td>Takes bribes above $15,000</td></tr>
+        </table>
+      </section>
+
+      <!-- 3 -->
+      <section id="how">
+        <h2><span class="n">03</span>How it works</h2>
+        <p class="lede">One authoritative server; humans and agents send the same kinds of inputs; everything lands in the ledger.</p>
+        <div class="diagram">
+          <svg viewBox="0 0 1000 520" role="img" aria-label="Architecture: browser clients and agent workers send inputs to the authoritative game server, which writes the ledger that flows to Bruin and MotherDuck for the playtest report.">
+            <defs>
+              <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#a99cbf" /></marker>
+            </defs>
+            <!-- humans -->
+            <rect x="20" y="40" width="210" height="120" rx="12" fill="#1f1433" stroke="#4fd1ff" stroke-width="2" />
+            <text x="125" y="72" fill="#4fd1ff" font-size="17" font-weight="700" text-anchor="middle">2 human players</text>
+            <text x="125" y="98" fill="#ece6f5" font-size="14" text-anchor="middle">Browser · React Three Fiber</text>
+            <text x="125" y="120" fill="#a99cbf" font-size="13" text-anchor="middle">keys → inputs only</text>
+            <text x="125" y="140" fill="#a99cbf" font-size="13" text-anchor="middle">map · help bot · sound</text>
+            <!-- agents -->
+            <rect x="20" y="300" width="210" height="150" rx="12" fill="#1f1433" stroke="#ffd166" stroke-width="2" />
+            <text x="125" y="332" fill="#ffd166" font-size="17" font-weight="700" text-anchor="middle">6 AI agents</text>
+            <text x="125" y="358" fill="#ece6f5" font-size="14" text-anchor="middle">one worker thread each</text>
+            <text x="125" y="380" fill="#a99cbf" font-size="13" text-anchor="middle">observe → decide → act</text>
+            <text x="125" y="402" fill="#a99cbf" font-size="13" text-anchor="middle">persona + goal + trust</text>
+            <text x="125" y="424" fill="#a99cbf" font-size="13" text-anchor="middle">LlmClient (Claude / stub)</text>
+            <!-- server -->
+            <rect x="370" y="150" width="260" height="200" rx="14" fill="#2a1338" stroke="#ff4fa3" stroke-width="2.5" />
+            <text x="500" y="185" fill="#ff9bd2" font-size="18" font-weight="800" text-anchor="middle">Game server</text>
+            <text x="500" y="210" fill="#ece6f5" font-size="14" text-anchor="middle">Colyseus · authoritative</text>
+            <text x="500" y="238" fill="#a99cbf" font-size="13" text-anchor="middle">owns positions, money, bags</text>
+            <text x="500" y="260" fill="#a99cbf" font-size="13" text-anchor="middle">phases · vault · cops · deals</text>
+            <text x="500" y="282" fill="#a99cbf" font-size="13" text-anchor="middle">validates every action</text>
+            <text x="500" y="320" fill="#7dffb0" font-size="14" font-weight="700" text-anchor="middle">writes a ledger row per action</text>
+            <!-- arrows to server -->
+            <path d="M230 100 C 300 100, 310 200, 368 215" fill="none" stroke="#a99cbf" stroke-width="2" marker-end="url(#a)" />
+            <path d="M368 240 C 310 250, 300 120, 232 120" fill="none" stroke="#4fd1ff55" stroke-width="2" stroke-dasharray="5 5" marker-end="url(#a)" />
+            <text x="295" y="88" fill="#a99cbf" font-size="12" text-anchor="middle">inputs</text>
+            <text x="300" y="168" fill="#4fd1ff" font-size="12" text-anchor="middle">state</text>
+            <path d="M230 370 C 300 370, 310 300, 368 290" fill="none" stroke="#a99cbf" stroke-width="2" marker-end="url(#a)" />
+            <path d="M368 315 C 320 330, 300 400, 232 395" fill="none" stroke="#ffd16655" stroke-width="2" stroke-dasharray="5 5" marker-end="url(#a)" />
+            <text x="300" y="350" fill="#a99cbf" font-size="12" text-anchor="middle">actions + reasons</text>
+            <text x="300" y="418" fill="#ffd166" font-size="12" text-anchor="middle">observations</text>
+            <!-- ledger -->
+            <rect x="740" y="40" width="240" height="100" rx="12" fill="#1f1433" stroke="#7dffb0" stroke-width="2" />
+            <text x="860" y="72" fill="#7dffb0" font-size="17" font-weight="700" text-anchor="middle">Decision ledger</text>
+            <text x="860" y="96" fill="#ece6f5" font-size="13" text-anchor="middle">SQLite + JSONL per session</text>
+            <text x="860" y="118" fill="#a99cbf" font-size="13" text-anchor="middle">who · what · why · where · when</text>
+            <path d="M630 220 C 690 200, 690 100, 738 95" fill="none" stroke="#7dffb0" stroke-width="2" marker-end="url(#a)" />
+            <!-- bruin -->
+            <rect x="740" y="200" width="240" height="100" rx="12" fill="#1f1433" stroke="#7dffb0" stroke-width="2" />
+            <text x="860" y="232" fill="#7dffb0" font-size="17" font-weight="700" text-anchor="middle">Bruin pipeline</text>
+            <text x="860" y="256" fill="#ece6f5" font-size="13" text-anchor="middle">MotherDuck warehouse</text>
+            <text x="860" y="278" fill="#a99cbf" font-size="13" text-anchor="middle">5 report tables · 17 checks</text>
+            <path d="M860 140 L860 198" stroke="#7dffb0" stroke-width="2" marker-end="url(#a)" />
+            <!-- report -->
+            <rect x="740" y="360" width="240" height="120" rx="12" fill="#2a1338" stroke="#ff4fa3" stroke-width="2.5" />
+            <text x="860" y="392" fill="#ff9bd2" font-size="17" font-weight="800" text-anchor="middle">Playtest report</text>
+            <text x="860" y="416" fill="#ece6f5" font-size="13" text-anchor="middle">issues by type and severity</text>
+            <text x="860" y="436" fill="#a99cbf" font-size="13" text-anchor="middle">phase times · stuck points</text>
+            <text x="860" y="456" fill="#a99cbf" font-size="13" text-anchor="middle">strategies · heat map</text>
+            <path d="M860 300 L860 358" stroke="#7dffb0" stroke-width="2" marker-end="url(#a)" />
+            <!-- sponsors -->
+            <rect x="370" y="410" width="260" height="90" rx="12" fill="#170f26" stroke="#2c2140" stroke-width="2" />
+            <text x="500" y="436" fill="#ece6f5" font-size="14" font-weight="700" text-anchor="middle">Integrations (each stubbable)</text>
+            <text x="500" y="460" fill="#a99cbf" font-size="12" text-anchor="middle">BAND crew channel · Telem radio news</text>
+            <text x="500" y="480" fill="#a99cbf" font-size="12" text-anchor="middle">Runware billboards · Bruin warehouse</text>
+            <path d="M500 350 L500 408" stroke="#a99cbf" stroke-width="2" stroke-dasharray="4 4" marker-end="url(#a)" />
+          </svg>
+        </div>
+        <p>
+          <strong>Why a server-authoritative design?</strong> If agents could edit the world directly, every report would be suspect. Here an agent is a player
+          like any human: it sees an <em>observation</em> built from server state and can only send actions the server validates. Whatever the agents
+          discover, including the exploit below, a human could also have found.
+        </p>
+      </section>
+
+      <!-- 4 -->
+      <section id="loop">
+        <h2><span class="n">04</span>The agent loop</h2>
+        <p class="lede">Every agent repeats four steps, every 4 seconds or immediately when something happens to it.</p>
+        <div class="two">
+          <div class="diagram">
+            <svg viewBox="0 0 480 440" role="img" aria-label="Agent loop: observe, decide, act, record, repeating.">
+              <defs><marker id="b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#ff4fa3" /></marker></defs>
+              <circle cx="240" cy="220" r="140" fill="none" stroke="#2c2140" stroke-width="2" />
+              <path d="M300 95 A140 140 0 0 1 365 160" fill="none" stroke="#ff4fa3" stroke-width="3" marker-end="url(#b)" />
+              <path d="M365 280 A140 140 0 0 1 300 345" fill="none" stroke="#ff4fa3" stroke-width="3" marker-end="url(#b)" />
+              <path d="M180 345 A140 140 0 0 1 115 280" fill="none" stroke="#ff4fa3" stroke-width="3" marker-end="url(#b)" />
+              <path d="M115 160 A140 140 0 0 1 180 95" fill="none" stroke="#ff4fa3" stroke-width="3" marker-end="url(#b)" />
+              <g><rect x="170" y="52" width="140" height="56" rx="10" fill="#1f1433" stroke="#4fd1ff" stroke-width="2" /><text x="240" y="78" fill="#4fd1ff" font-size="16" font-weight="800" text-anchor="middle">1 OBSERVE</text><text x="240" y="97" fill="#a99cbf" font-size="12" text-anchor="middle">what I can see and hear</text></g>
+              <g><rect x="320" y="192" width="150" height="56" rx="10" fill="#1f1433" stroke="#ffd166" stroke-width="2" /><text x="395" y="218" fill="#ffd166" font-size="16" font-weight="800" text-anchor="middle">2 DECIDE</text><text x="395" y="237" fill="#a99cbf" font-size="12" text-anchor="middle">persona + model → JSON</text></g>
+              <g><rect x="170" y="332" width="140" height="56" rx="10" fill="#1f1433" stroke="#ff4fa3" stroke-width="2" /><text x="240" y="358" fill="#ff9bd2" font-size="16" font-weight="800" text-anchor="middle">3 ACT</text><text x="240" y="377" fill="#a99cbf" font-size="12" text-anchor="middle">server validates it</text></g>
+              <g><rect x="10" y="192" width="150" height="56" rx="10" fill="#1f1433" stroke="#7dffb0" stroke-width="2" /><text x="85" y="218" fill="#7dffb0" font-size="16" font-weight="800" text-anchor="middle">4 RECORD</text><text x="85" y="237" fill="#a99cbf" font-size="12" text-anchor="middle">ledger row + reason</text></g>
+              <text x="240" y="214" fill="#ece6f5" font-size="15" font-weight="700" text-anchor="middle">every 4 s</text>
+              <text x="240" y="234" fill="#a99cbf" font-size="12" text-anchor="middle">or on: spoken to, deal,</text>
+              <text x="240" y="250" fill="#a99cbf" font-size="12" text-anchor="middle">alarm, arrest, phase change</text>
+            </svg>
+          </div>
+          <div>
+            <h3>What the agent sees</h3>
+            <p>A compact <strong>observation</strong> built only from what that player could know: phase and time left, its own cash and bag, players within 40 m, speech it heard, pending deals, the result of its last action, its trust scores and its memory summary.</p>
+            <h3>What it must answer</h3>
+            <p>A strict JSON decision, validated with zod: <code>{"{"} action, reason, say, trustChanges {"}"}</code>. If the reply is invalid it gets one retry, then it falls back to <code>wait</code>. A slow model never freezes a character.</p>
+            <h3>Why the reason matters</h3>
+            <p>The <code>reason</code> is what turns gameplay into a test report. A studio doesn't just see "Dex laundered money six times"; it reads <em>"Launder while still holding the bag"</em>, the agent's own words at the moment it found the exploit.</p>
+          </div>
+        </div>
+        <figure>
+          <img src="/about/ledger.jpg" alt="The in-game decision ledger panel listing each agent's action and reason" loading="lazy" />
+          <figcaption>The decision ledger in game (Tab). Each row shows the agent, its action, which model "harness" decided it, latency, and the reason in plain words.</figcaption>
+        </figure>
+      </section>
+
+      <!-- 5 -->
+      <section id="learn">
+        <h2><span class="n">05</span>How it learns</h2>
+        <p class="lede">Learning happens on four timescales. The first three belong to the agents; the fourth belongs to the studio.</p>
+        <div class="diagram">
+          <svg viewBox="0 0 1000 380" role="img" aria-label="Four nested learning loops: per decision trust, within a session memory, across sessions summaries, and the studio fix loop.">
+            <defs><marker id="c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#a99cbf" /></marker></defs>
+            <rect x="10" y="10" width="980" height="360" rx="18" fill="#170f26" stroke="#ff4fa3" stroke-width="2" />
+            <text x="30" y="40" fill="#ff9bd2" font-size="16" font-weight="800">④ STUDIO LOOP · across builds</text>
+            <text x="30" y="62" fill="#a99cbf" font-size="13">report → designer fixes the rule → re-run the same seed → compare reports</text>
+            <rect x="30" y="80" width="690" height="270" rx="16" fill="#1c1230" stroke="#ffd166" stroke-width="2" />
+            <text x="50" y="108" fill="#ffd166" font-size="15" font-weight="800">③ ACROSS SESSIONS · per agent</text>
+            <text x="50" y="128" fill="#a99cbf" font-size="13">3-sentence summary of each player, stored and loaded next game</text>
+            <rect x="50" y="145" width="470" height="190" rx="14" fill="#221637" stroke="#4fd1ff" stroke-width="2" />
+            <text x="70" y="172" fill="#4fd1ff" font-size="15" font-weight="800">② WITHIN A SESSION</text>
+            <text x="70" y="192" fill="#a99cbf" font-size="13">last 30 events I saw: who spoke, who betrayed, who got arrested</text>
+            <rect x="70" y="210" width="290" height="110" rx="12" fill="#2a1a40" stroke="#7dffb0" stroke-width="2" />
+            <text x="90" y="238" fill="#7dffb0" font-size="15" font-weight="800">① EVERY DECISION</text>
+            <text x="90" y="260" fill="#ece6f5" font-size="13">trust 0–100 per player, starts at 50</text>
+            <text x="90" y="280" fill="#a99cbf" font-size="13">model returns trustChanges,</text>
+            <text x="90" y="300" fill="#a99cbf" font-size="13">clamped to ±20 per decision</text>
+            <!-- right: example -->
+            <text x="760" y="108" fill="#ece6f5" font-size="15" font-weight="800">Example</text>
+            <text x="760" y="136" fill="#a99cbf" font-size="13">Dex betrays a split.</text>
+            <text x="760" y="160" fill="#7dffb0" font-size="13">① Opal: trust(Dex) 50 → 30</text>
+            <text x="760" y="184" fill="#4fd1ff" font-size="13">② "Dex voided our deal" stays</text>
+            <text x="760" y="202" fill="#4fd1ff" font-size="13">     in her session log</text>
+            <text x="760" y="226" fill="#ffd166" font-size="13">③ next game she starts with:</text>
+            <text x="760" y="244" fill="#ffd166" font-size="13">     "Dex betrays when it pays"</text>
+            <text x="760" y="268" fill="#ff9bd2" font-size="13">④ report flags betrayal as a</text>
+            <text x="760" y="286" fill="#ff9bd2" font-size="13">     dominant strategy → designer</text>
+            <text x="760" y="304" fill="#ff9bd2" font-size="13">     adds a penalty → re-run</text>
+          </svg>
+        </div>
+        <table>
+          <tr><th>Loop</th><th>What changes</th><th>Where it lives</th><th>Status</th></tr>
+          <tr><td>① Every decision</td><td>Trust in each other player, nudged by what just happened</td><td><code>runtime/decide.ts</code> + <code>AgentRunner.ts</code></td><td><span class="tag built">Built</span></td></tr>
+          <tr><td>② Within a session</td><td>The last 30 relevant events, fed back into each observation</td><td><code>runtime/observation.ts</code></td><td><span class="tag built">Built</span></td></tr>
+          <tr><td>③ Across sessions</td><td>A model-written summary per player, loaded at the next start; the ledger marks decisions that cite a past game</td><td>SQLite, milestone M7</td><td><span class="tag planned">Planned (M7)</span></td></tr>
+          <tr><td>④ Studio loop</td><td>The game's rules, between builds, using the report as evidence</td><td>Ledger → Bruin → MotherDuck → report</td><td><span class="tag built">Pipeline live</span></td></tr>
+        </table>
+        <p>
+          <strong>Why not train a model?</strong> These agents don't change their weights. They learn the way people at a table do: by remembering who did what and
+          adjusting how much they trust them. That keeps every lesson readable. A memory is a sentence you can open and check, and the ledger shows exactly which
+          decision used it. For a playtest tool, a lesson you can audit is worth more than a hidden one.
+        </p>
+        <p>
+          <strong>Honest status:</strong> the decision step runs through an <code>LlmClient</code> interface. With <code>LLM_PROVIDER=anthropic</code> and a key it
+          uses Claude. Without one, as in the runs measured below, each persona runs a deterministic, observation-driven stub policy, which is also what the
+          automated tests use. The pipeline, ledger and reports work the same either way.
+        </p>
+      </section>
+
+      <!-- 6 -->
+      <section id="found">
+        <h2><span class="n">06</span>What the agents found</h2>
+        <p class="lede">From 21 recorded sessions: 19,477 decisions and 48 issues the agents filed themselves.</p>
+        <div class="grid">
+          <div class="card"><b>19,477</b><span>ledger decisions, each with a reason</span></div>
+          <div class="card"><b>48</b><span>issues filed by agents via <code>report_issue</code></span></div>
+          <div class="card"><b>7×</b><span>the griefer independently re-found the planted exploit</span></div>
+          <div class="card"><b>1</b><span>market crash caused by agents alone, with no human action</span></div>
+        </div>
+        <div class="diagram" style="margin-top: 20px">
+          <svg viewBox="0 0 1000 300" role="img" aria-label="Issues filed per agent: Rico 18 balance, Marisol 13 (7 confusing, 6 stuck), Opal 9 confusing, Dex 8 (7 exploit, 1 balance).">
+            <text x="20" y="28" fill="#ece6f5" font-size="16" font-weight="800">Issues filed, by agent and type</text>
+            <!-- scale: 1 issue = 40px, bars start at x=150 -->
+            <g font-size="14">
+              <text x="130" y="82" fill="#ece6f5" text-anchor="end" font-weight="700">Rico</text>
+              <rect x="150" y="64" width="720" height="26" rx="4" fill="#ffd166" />
+              <text x="880" y="83" fill="#a99cbf">18</text>
+              <text x="130" y="137" fill="#ece6f5" text-anchor="end" font-weight="700">Marisol</text>
+              <rect x="150" y="119" width="280" height="26" rx="4" fill="#4fd1ff" />
+              <rect x="432" y="119" width="238" height="26" rx="4" fill="#a35cff" />
+              <text x="680" y="138" fill="#a99cbf">13</text>
+              <text x="130" y="192" fill="#ece6f5" text-anchor="end" font-weight="700">Opal</text>
+              <rect x="150" y="174" width="360" height="26" rx="4" fill="#4fd1ff" />
+              <text x="520" y="193" fill="#a99cbf">9</text>
+              <text x="130" y="247" fill="#ece6f5" text-anchor="end" font-weight="700">Dex</text>
+              <rect x="150" y="229" width="280" height="26" rx="4" fill="#ff4fa3" />
+              <rect x="432" y="229" width="38" height="26" rx="4" fill="#ffd166" />
+              <text x="480" y="248" fill="#a99cbf">8</text>
+            </g>
+            <g font-size="13">
+              <rect x="640" y="200" width="14" height="14" rx="3" fill="#ffd166" /><text x="660" y="212" fill="#a99cbf">balance</text>
+              <rect x="740" y="200" width="14" height="14" rx="3" fill="#4fd1ff" /><text x="760" y="212" fill="#a99cbf">confusing</text>
+              <rect x="640" y="226" width="14" height="14" rx="3" fill="#a35cff" /><text x="660" y="238" fill="#a99cbf">stuck</text>
+              <rect x="740" y="226" width="14" height="14" rx="3" fill="#ff4fa3" /><text x="760" y="238" fill="#a99cbf">exploit (high)</text>
+            </g>
+          </svg>
+        </div>
+        <p>Each persona found the kind of problem it was built to find. These are real entries from the ledger:</p>
+        <blockquote>"Laundering while carrying a bag credits the clean cash but never deducts the dirty cash, so repeating launder…"<cite>Dex · griefer · exploit · high. This is the exploit planted in the design on purpose to check that the testers would find it. They did, without being told.</cite></blockquote>
+        <blockquote>"One player abusing the laundering exploit pushed clean cash past 600,000 and crashed every stake price…"<cite>Dex · balance · high. A world-wide market crash caused by agents alone.</cite></blockquote>
+        <blockquote>"The plan phase runs 90 s even when the crew has nothing left to agree; a driver just stands at the nightclub."<cite>Rico · speedrunner · balance · low. A pacing note a designer can act on directly.</cite></blockquote>
+        <blockquote>"I tried move_to and was told 'you are arrested and cannot act'. Nothing told me that beforehand."<cite>Opal · newcomer · confusing · low. Missing feedback, the kind of note that usually needs a user interview.</cite></blockquote>
+      </section>
+
+      <!-- 7 -->
+      <section id="world">
+        <h2><span class="n">07</span>The world</h2>
+        <p class="lede">An original 1980s art-deco beachfront. The sky moves from golden hour to night as the heist plays out.</p>
+        <div class="diagram">
+          <svg viewBox="0 0 1000 170" role="img" aria-label="West to east layout: Second Street, service alley, hotel row, beachfront avenue, park, beach, ocean.">
+            <g font-size="13" text-anchor="middle">
+              <rect x="10" y="20" width="190" height="90" fill="#6b6670" /><text x="105" y="60" fill="#fff" font-weight="700">Second Street</text><text x="105" y="80" fill="#eee" font-size="11">bank · club · police · pawn · exchange</text>
+              <rect x="200" y="20" width="30" height="90" fill="#4d4a52" /><text x="215" y="130" fill="#a99cbf" font-size="11">alley</text>
+              <rect x="230" y="20" width="115" height="90" fill="#b9aa9a" /><text x="287" y="68" fill="#1a1a1a" font-weight="700">Hotel row</text>
+              <rect x="345" y="20" width="77" height="90" fill="#2f2e36" /><text x="383" y="68" fill="#fff" font-weight="700">Avenue</text>
+              <rect x="422" y="20" width="115" height="90" fill="#5f8f5a" /><text x="480" y="68" fill="#fff" font-weight="700">Park</text>
+              <rect x="537" y="20" width="230" height="90" fill="#e8d3a6" /><text x="652" y="68" fill="#1a1a1a" font-weight="700">Beach</text>
+              <rect x="767" y="20" width="223" height="90" fill="#1f6f8b" /><text x="878" y="60" fill="#fff" font-weight="700">Ocean</text><text x="878" y="80" fill="#fff" font-size="11">marina pier: bank the bags</text>
+              <text x="20" y="155" fill="#a99cbf" text-anchor="start">← West: the heist starts here</text>
+              <text x="980" y="155" fill="#a99cbf" text-anchor="end">East: the getaway ends here →</text>
+            </g>
+          </svg>
+        </div>
+        <div class="gallery" style="margin-top: 20px">
+          <figure><img src="/about/day.jpg" alt="Second Street at golden hour with the crew gathered" loading="lazy" /><figcaption>Golden hour on Second Street. The crew gathers in the lobby; diamonds in the list are AI agents.</figcaption></figure>
+          <figure><img src="/about/night.jpg" alt="Second Street at night with neon and lit windows" loading="lazy" /><figcaption>Night falls during the getaway: lit windows, neon and the nightclub's glow.</figcaption></figure>
+          <figure><img src="/about/map.jpg" alt="Full navigation map" loading="lazy" /><figcaption>The navigation map (M) shows every location, crew, cops, cars and a guide line to your current objective.</figcaption></figure>
+          <figure><img src="/about/help.jpg" alt="Sal the help bot answering how to open the vault" loading="lazy" /><figcaption>Sal, the help bot (H), answers how-to-play questions offline and always knows your next step.</figcaption></figure>
+        </div>
+        <h3>Billboards generated for this project</h3>
+        <p>Every brand in the bay is invented. The rooftop billboards were generated at build time with Runware from prompts in the repo.</p>
+        <div class="billboards">
+          <img src="/generated/billboard_harbor_cola.png" alt="Harbor Cola billboard" loading="lazy" />
+          <img src="/generated/billboard_velvet_static.png" alt="Velvet Static 96.6 FM billboard" loading="lazy" />
+          <img src="/generated/billboard_first_coral.png" alt="First Coral Trust billboard" loading="lazy" />
+          <img src="/generated/billboard_gatorline.png" alt="Gatorline Marine billboard" loading="lazy" />
+          <img src="/generated/billboard_palmetto_video.png" alt="Palmetto Video billboard" loading="lazy" />
+          <img src="/generated/billboard_seaspray.png" alt="Seaspray Telecom billboard" loading="lazy" />
+        </div>
+      </section>
+
+      <!-- 8 -->
+      <section id="stack">
+        <h2><span class="n">08</span>Stack and integrations</h2>
+        <table>
+          <tr><th>Piece</th><th>What it does</th><th>Status</th></tr>
+          <tr><td>React Three Fiber · Rapier</td><td>3D client, physics, CC0 photo textures and a sunset HDRI, post-processing</td><td><span class="tag built">Built</span></td></tr>
+          <tr><td>Colyseus</td><td>Authoritative multiplayer server</td><td><span class="tag built">Built</span></td></tr>
+          <tr><td>Agent workers + <code>LlmClient</code></td><td>One thread per agent; Claude or deterministic stub policies</td><td><span class="tag built">Built</span></td></tr>
+          <tr><td>BAND</td><td>Private crew channel: whispers, deals and betrayals mirrored to a BAND room</td><td><span class="tag built">Live</span></td></tr>
+          <tr><td>Telem</td><td>Live headlines read out on Velvet Static 96.6 FM</td><td><span class="tag built">Live</span></td></tr>
+          <tr><td>Runware</td><td>Build-time billboard art</td><td><span class="tag built">Live</span></td></tr>
+          <tr><td>Bruin + MotherDuck</td><td>Ledger warehouse and the report pipeline, running in Bruin Cloud</td><td><span class="tag built">Live</span></td></tr>
+          <tr><td>Cross-session memory · voice</td><td>Milestone M7</td><td><span class="tag planned">Planned</span></td></tr>
+        </table>
+        <p style="margin-top: 20px">Every integration sits behind an interface with a stub, so the whole game runs offline with no keys. API keys stay on the server and never reach the browser.</p>
+      </section>
+    </main>
+    <footer>Neon Bay '86. Original work: no assets, names or designs from any existing game. Third-party assets are CC0 and listed in ASSETS.md. <a href="/">Play →</a></footer>
+  </body>
+</html>

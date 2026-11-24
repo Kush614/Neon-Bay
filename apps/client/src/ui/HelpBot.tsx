@@ -9,7 +9,7 @@ interface Msg {
   text: string;
 }
 
-const SUGGESTIONS = ["What do I do now?", "How do I open the vault?", "Where is the marina?", "How do I launder cash?", "Controls", "What about the cops?"];
+const SUGGESTIONS = ["What do I do now?", "What is this project?", "How do I open the vault?", "Where is the marina?", "How do I launder cash?", "Controls", "What about the cops?"];
 
 export function HelpBot() {
   const [open, setOpen] = useState(() => !localStorage.getItem("nb-help-seen"));
@@ -76,6 +76,9 @@ export function HelpBot() {
     >
       <div style={{ padding: "8px 12px", borderBottom: "1px solid #ff4fa355", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <span style={{ fontWeight: 800, letterSpacing: 1, color: "#ff9bd2" }}>SAL · HOW TO PLAY</span>
+        <a href="/about.html" target="_blank" rel="noreferrer" style={{ marginLeft: "auto", marginRight: 10, fontSize: 12, color: "#4fd1ff" }}>
+          About this project ↗
+        </a>
         <button onClick={() => setOpen(false)} style={{ background: "none", border: "none", color: "#fff", cursor: "pointer", fontSize: 16 }}>
           ×
         </button>

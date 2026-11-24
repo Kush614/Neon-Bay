@@ -21,6 +21,7 @@ export const DECIDE_INTERVAL_MS = 4000;
 /** Minimum gap between event-triggered decisions, so a rejection can't spin the loop. */
 const MIN_TRIGGER_GAP_MS = 1000;
 const SESSION_LOG_SIZE = 30;
+const TRUST_START = 50;
 const RECENT_SPEECH_SIZE = 10;
 
 export interface AgentRunnerOptions {
@@ -94,6 +95,8 @@ export class AgentRunner {
   private stopped = false;
   private lastActionResult: ActionResult | null = null;
   private readonly sessionLog: string[] = [];
+  /** Trust 0 to 100 per other player, starting at 50 (SPEC.md section 14). */
+  readonly trust = new Map<string, number>();
   private readonly recentSpeech: { from: string; text: string }[] = [];
   private readonly deals = new Map<string, DealView>();
   private revealUntil = -Infinity;
@@ -215,6 +218,7 @@ export class AgentRunner {
         selfId: t.sessionId,
         lastActionResult: this.lastActionResult,
         recentEvents: [...this.sessionLog],
+        trust: Object.fromEntries(this.trust),
         recentSpeech: [...this.recentSpeech],
         deals: [...this.deals.values()],
         police: {
@@ -227,6 +231,7 @@ export class AgentRunner {
       const result = await decide(this.opts.llm, this.system, JSON.stringify(observation));
       if (this.stopped) return;
       this.decisions.push({ observation, result, at: this.clock.now() });
+      this.applyTrust(result.decision.trustChanges);
       this.act(result);
       this.log(`${result.decision.action.type} (${result.latencyMs} ms${result.fellBack ? ", fell back" : ""}): ${result.decision.reason}`);
     } finally {
@@ -235,6 +240,14 @@ export class AgentRunner {
         this.pending = false;
         this.trigger();
       }
+    }
+  }
+
+  /** Accumulate the decision's (already ±20-clamped) trust changes into running scores. */
+  private applyTrust(changes: Record<string, number>): void {
+    for (const [player, delta] of Object.entries(changes)) {
+      const next = (this.trust.get(player) ?? TRUST_START) + delta;
+      this.trust.set(player, Math.min(100, Math.max(0, next)));
     }
   }
 

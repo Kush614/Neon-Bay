@@ -51,4 +51,16 @@ describe("M3: first agent", () => {
 
     await runner.stop();
   }, 60_000);
+
+  it("accumulates trust from decisions and feeds it into the next observation", async () => {
+    const distrust: Decision = { action: { type: "wait" }, reason: "Dex voided our deal.", say: null, trustChanges: { Dex: -30 } };
+    const llm = new StubLlmClient([distrust, distrust, distrust, wait]);
+    const runner = new AgentRunner({ persona: rico, llm, serverUrl: `http://localhost:${port}`, log: () => {} });
+    await runner.start();
+    // -30 is clamped to -20 per decision: 50 -> 30 -> 10 -> 0, never below 0.
+    await expect.poll(() => runner.trust.get("Dex"), { timeout: 30_000 }).toBe(0);
+    await expect.poll(() => llm.calls.length, { timeout: 30_000 }).toBeGreaterThanOrEqual(2);
+    expect(JSON.parse(llm.calls[1]!.observation).trust.Dex).toBe(30);
+    await runner.stop();
+  }, 60_000);
 });

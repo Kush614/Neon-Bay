@@ -13,6 +13,11 @@ const money = (n: number) => `$${n.toLocaleString("en-US")}`;
 
 export const TOPICS: Topic[] = [
   {
+    id: "about",
+    keys: ["project", "about", "why", "playtest", "playtester", "learn", "learning", "ledger report", "who made"],
+    answer: "Neon Bay is a test bench: the AI crew are playtesters with personas (speedrunner, explorer, griefer, newcomer). Every decision they make goes into a ledger with their reason, and they file bug reports themselves. The ledger becomes a playtest report for the studio. The full story, with diagrams, is on the About page: /about.html",
+  },
+  {
     id: "goal",
     keys: ["goal", "win", "objective", "point", "how to play", "what do i do", "start", "begin", "score", "aim"],
     answer: `You're a crew robbing the Neon Bay bank. Crack the vault, carry bags of dirty cash to the marina, then launder it. Your final score is clean cash plus the value of your stakes at the end of payout. Crewmates are AI agents, and they may cut deals or betray you.`,
