@@ -430,6 +430,22 @@ export const CARS: readonly CarSpec[] = [
   { id: "car_tidecutter", label: "Tidecutter", color: "#9b7bff", spawn: { x: 104, z: 9, heading: Math.PI } },
 ];
 
+/**
+ * Areas the pedestrian navmesh treats as blocked although nothing static stands there:
+ * the row where cars park at the car park. Without this, paths cut between parked cars.
+ */
+export function navBlockers(): Box[] {
+  const xs = CARS.map((c) => c.spawn.x);
+  const zs = CARS.map((c) => c.spawn.z);
+  const r = {
+    minX: Math.min(...xs) - CAR_HALF_EXTENTS.x - 0.5,
+    maxX: Math.max(...xs) + CAR_HALF_EXTENTS.x + 0.5,
+    minZ: Math.min(...zs) - CAR_HALF_EXTENTS.z - 0.5,
+    maxZ: Math.max(...zs) + CAR_HALF_EXTENTS.z + 0.5,
+  };
+  return [rectBox(r, GROUND_Y, GROUND_Y + 2)];
+}
+
 export function propBoxes(): StaticBox[] {
   const out: StaticBox[] = [];
   // Park wall segments between openings.

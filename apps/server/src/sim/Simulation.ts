@@ -21,6 +21,9 @@ const SPEED_EPSILON = 0.01;
 const WAYPOINT_RADIUS = 0.6;
 const STUCK_SECONDS = 3;
 const STUCK_PROGRESS = 0.3;
+/** After this long without progress, sidestep to slide around a car or another player. */
+const SIDESTEP_AFTER = 0.7;
+const SIDESTEP_ANGLE = (70 * Math.PI) / 180;
 
 interface ActivePath {
   points: Vec3[];
@@ -105,8 +108,8 @@ export class Simulation {
     if (p.vehicleId) {
       const v = this.vehicles.get(p.vehicleId)!;
       const drive: DriveInput = { throttle: msg.throttle ?? 0, steer: msg.steer ?? 0 };
-      if (drive.throttle !== 0 || drive.steer !== 0) v.clearRoute();
-      if (!v.route) v.input = drive;
+      // Zero input while the autopilot drives leaves it alone; anything else takes over.
+      if (!v.route || drive.throttle !== 0 || drive.steer !== 0) v.drive(drive);
       return true;
     }
     const len = Math.hypot(msg.x, msg.z);
@@ -262,7 +265,14 @@ export class Simulation {
     const dx = wp.x - feet.x;
     const dz = wp.z - feet.z;
     const d = Math.hypot(dx, dz);
-    p.input = { x: dx / d, z: dz / d, run: path.run };
+    let x = dx / d;
+    let z = dz / d;
+    if (path.sinceProgress > SIDESTEP_AFTER) {
+      // Alternate sides so a head-on block against a box gets a sliding component.
+      const a = (Math.floor(path.sinceProgress / SIDESTEP_AFTER) % 2 ? 1 : -1) * SIDESTEP_ANGLE;
+      [x, z] = [x * Math.cos(a) - z * Math.sin(a), x * Math.sin(a) + z * Math.cos(a)];
+    }
+    p.input = { x, z, run: path.run };
   }
 
   /** Advance one sub-step: steer, move characters and cars, validate speeds, then step the world. */

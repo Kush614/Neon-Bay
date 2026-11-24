@@ -1,7 +1,7 @@
 // Pedestrian navmesh built from the same world layout as the physics colliders.
 import { init as initRecast, NavMeshQuery, type NavMesh } from "recast-navigation";
 import { generateTiledNavMesh } from "recast-navigation/generators";
-import { CHARACTER_RADIUS, GROUND_Y, staticColliders, type Box, type Vec3 } from "@neon-bay/shared";
+import { CHARACTER_RADIUS, GROUND_Y, navBlockers, staticColliders, type Box, type Vec3 } from "@neon-bay/shared";
 
 const CELL_SIZE = 0.3;
 const CELL_HEIGHT = 0.2;
@@ -35,7 +35,7 @@ export class NavGraph {
     await initRecast();
     const positions: number[] = [];
     const indices: number[] = [];
-    for (const b of staticColliders()) pushBox(b, positions, indices);
+    for (const b of [...staticColliders(), ...navBlockers()]) pushBox(b, positions, indices);
     const result = generateTiledNavMesh(positions, indices, {
       cs: CELL_SIZE,
       ch: CELL_HEIGHT,

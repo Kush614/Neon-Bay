@@ -53,6 +53,8 @@ export class Vehicle {
   driverId: string | null = null;
   input: DriveInput = { throttle: 0, steer: 0 };
   route: AutoRoute | null = null;
+  /** Set when the autopilot finishes: brake to a stop and hold until someone drives. */
+  holding = false;
 
   constructor(
     rapier: Rapier,
@@ -92,6 +94,7 @@ export class Vehicle {
       if ((a.x - p.x) * (b.x - a.x) + (a.z - p.z) * (b.z - a.z) < 0) pts = pts.slice(1);
     }
     this.route = { points: pts, index: 0, target, bestRemaining: Infinity, sinceProgress: 0, reversing: 0 };
+    this.holding = false;
   }
 
   clearRoute(): void {
@@ -99,20 +102,30 @@ export class Vehicle {
     this.input = { throttle: 0, steer: 0 };
   }
 
+  /** Manual driving input; cancels the autopilot and the parking brake. */
+  drive(input: DriveInput): void {
+    this.input = input;
+    if (input.throttle !== 0 || input.steer !== 0) {
+      this.route = null;
+      this.holding = false;
+    }
+  }
+
   private autopilot(dt: number): VehicleEvent | null {
     const r = this.route;
     if (!r) return null;
     const p = this.position();
     let wp = r.points[r.index]!;
-    const last = r.index === r.points.length - 1;
     while (Math.hypot(wp.x - p.x, wp.z - p.z) < (r.index === r.points.length - 1 ? ARRIVE_RADIUS : WAYPOINT_RADIUS)) {
       r.index++;
       if (r.index >= r.points.length) {
         this.clearRoute();
+        this.holding = true;
         return { type: "arrived", target: r.target };
       }
       wp = r.points[r.index]!;
     }
+    const last = r.index === r.points.length - 1;
     const end = r.points[r.points.length - 1]!;
     const remaining = Math.hypot(end.x - p.x, end.z - p.z);
     const desired = Math.atan2(wp.x - p.x, wp.z - p.z);
@@ -137,8 +150,16 @@ export class Vehicle {
     const dist = Math.hypot(wp.x - p.x, wp.z - p.z);
     // Positive diff means the target is anticlockwise from the heading when viewed from above.
     const steer = Math.max(-1, Math.min(1, -diff * 2));
-    const slow = last && dist < 15 ? 0.4 : 1;
-    const throttle = Math.abs(diff) > 1.2 ? 0.25 : slow;
+    // Speed limit: brake into the final stop, slow for sharp turns at a waypoint, crawl while turning.
+    let limit = CAR_MAX_SPEED;
+    if (last) limit = Math.min(limit, Math.sqrt(2 * CAR_BRAKE * 0.5 * Math.max(0, dist - ARRIVE_RADIUS * 0.5)) + 1);
+    else {
+      const after = r.points[r.index + 1]!;
+      const turn = Math.abs(Math.atan2(Math.sin(Math.atan2(after.x - wp.x, after.z - wp.z) - desired), Math.cos(Math.atan2(after.x - wp.x, after.z - wp.z) - desired)));
+      if (turn > Math.PI / 4) limit = Math.min(limit, 7 + dist * 0.6);
+    }
+    if (Math.abs(diff) > 1.2) limit = Math.min(limit, 4);
+    const throttle = this.speed > limit + 0.5 ? -1 : this.speed < limit ? 1 : 0;
     this.input = { throttle, steer };
     return null;
   }
@@ -147,7 +168,9 @@ export class Vehicle {
   step(dt: number): VehicleEvent | null {
     const event = this.autopilot(dt);
     const { throttle, steer } = this.input;
-    if (throttle > 0) this.speed += throttle * CAR_ACCEL * dt;
+    if (this.holding && !this.route) {
+      this.speed -= Math.sign(this.speed) * Math.min(Math.abs(this.speed), CAR_BRAKE * dt);
+    } else if (throttle > 0) this.speed += throttle * CAR_ACCEL * dt;
     else if (throttle < 0) this.speed += throttle * (this.speed > 0 ? CAR_BRAKE : CAR_ACCEL) * dt;
     else this.speed -= Math.sign(this.speed) * Math.min(Math.abs(this.speed), CAR_DRAG * dt);
     this.speed = Math.max(-CAR_MAX_REVERSE, Math.min(CAR_MAX_SPEED, this.speed));
