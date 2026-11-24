@@ -57,6 +57,29 @@
       .billboards { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); margin-top: 16px; }
       .billboards img { width: 100%; border-radius: 8px; border: 1px solid var(--line); }
       footer { text-align: center; color: var(--muted); font-size: 14px; padding: 40px 24px; border-top: 1px solid var(--line); }
+      .tldr { max-width: 760px; margin: 28px auto 0; text-align: left; background: #170f26cc; border: 1px solid #ff4fa366; border-radius: 14px; padding: 18px 22px; color: var(--text); font-size: 17px; }
+      .tldr b { color: var(--gold); }
+      .uses { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); margin-top: 20px; }
+      .uses .card h4, .sponsor h4 { margin: 0 0 6px; font-size: 18px; }
+      .uses .card p, .sponsor p { margin: 6px 0; font-size: 15px; color: var(--text); }
+      .uses .card .eg { color: var(--muted); font-size: 14px; }
+      .sponsors { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(440px, 1fr)); margin-top: 20px; }
+      @media (max-width: 960px) { .sponsors { grid-template-columns: 1fr; } }
+      .sponsor { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 20px; border-top: 4px solid var(--c, var(--pink)); }
+      .sponsor .what { color: var(--muted); font-size: 14px; margin-bottom: 10px; }
+      .sponsor dl { margin: 10px 0 0; display: grid; grid-template-columns: 110px 1fr; gap: 6px 12px; font-size: 14px; }
+      .sponsor dt { color: var(--muted); font-weight: 600; }
+      .sponsor dd { margin: 0; }
+      .timeline { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-top: 18px; }
+      @media (max-width: 860px) { .timeline { grid-template-columns: 1fr 1fr; } }
+      .step { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px; font-size: 14px; }
+      .step b { display: block; color: var(--gold); font-size: 13px; letter-spacing: 1px; }
+      .step .t { color: var(--muted); font-size: 12px; }
+      dl.glossary { display: grid; grid-template-columns: 200px 1fr; gap: 10px 18px; }
+      dl.glossary dt { font-weight: 700; color: var(--cyan); }
+      dl.glossary dd { margin: 0; }
+      details { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; margin-top: 10px; }
+      summary { cursor: pointer; font-weight: 700; }
       svg text { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
     </style>
   </head>
@@ -65,16 +88,26 @@
       <h1>NEON BAY '86</h1>
       <p>A co-op heist game on a 1980s beachfront where AI agents play alongside humans, and where every agent is also a playtester that explains every decision it makes.</p>
       <a class="cta" href="/">Play the game →</a>
+      <div class="tldr">
+        <b>In one minute:</b> testing an online game needs lots of people playing together, and that's slow and expensive.
+        Neon Bay fills the empty seats with <b>AI players</b>. They play a real heist alongside humans, each with its own personality,
+        and <b>write down why they do everything they do</b>. When they spot a bug, a cheat or something confusing, they report it.
+        All of that becomes a <b>playtest report</b> a game studio can act on the same day.
+      </div>
     </header>
     <nav>
       <a href="#problem">The problem</a>
+      <a href="#uses">Who it's for</a>
       <a href="#idea">The idea</a>
       <a href="#how">How it works</a>
       <a href="#loop">Agent loop</a>
+      <a href="#session">A session</a>
       <a href="#learn">How it learns</a>
       <a href="#found">What it found</a>
       <a href="#world">The world</a>
+      <a href="#sponsors">Sponsors</a>
       <a href="#stack">Stack</a>
+      <a href="#faq">FAQ</a>
     </nav>
     <main>
       <!-- 1 -->
@@ -93,6 +126,22 @@
           <div class="card"><b>Opaque</b><span>Footage shows <em>what</em> happened. It rarely says <em>why</em> a player chose it.</span></div>
           <div class="card"><b>Narrow</b><span>Testers play "normally". Exploits come from the few players who don't.</span></div>
         </div>
+      </section>
+
+      <!-- uses -->
+      <section id="uses">
+        <h2><span class="n">01b</span>Who it's for: the use cases</h2>
+        <p class="lede">Anyone who makes a game where people play together, and can't get a room full of testers every day.</p>
+        <div class="uses">
+          <div class="card"><h4>🎮 Game studios, before launch</h4><p>Run hundreds of full multiplayer sessions overnight instead of booking human testers. Wake up to a list of bugs, cheats and confusing moments, each with the exact moment it happened.</p><p class="eg">Example: "The plan phase is 90 seconds too long" arrived from the speedrunner agent 18 times.</p></div>
+          <div class="card"><h4>🧩 Indie teams with no testing budget</h4><p>A two-person team can't fill a 6-player lobby. AI players can, and they play every night for free while you sleep.</p><p class="eg">The whole thing runs on a laptop; no API keys needed to try it.</p></div>
+          <div class="card"><h4>🛡️ Finding cheats before players do</h4><p>The "griefer" agent's whole job is to break the rules. It tries odd actions in odd moments, which is exactly how real cheaters find exploits.</p><p class="eg">We hid an exploit on purpose. The griefer found it 7 times without being told it existed.</p></div>
+          <div class="card"><h4>⚖️ Balance checks after every patch</h4><p>Change a rule, re-run the same seeds, compare the two reports. You see if betrayal became too strong or a phase got boring, before you ship.</p><p class="eg">Same seed means the same situation, so the comparison is fair.</p></div>
+          <div class="card"><h4>🧭 New-player experience</h4><p>The "newcomer" agent follows instructions literally and reports every time it gets stuck or confused, like a first-time player who actually tells you what went wrong.</p><p class="eg">"Nothing told me I was arrested" is a real note it filed.</p></div>
+          <div class="card"><h4>🤝 Research on AI teammates</h4><p>Humans and AI share one world as equals, making deals and breaking them. It's a ready-made sandbox to study trust, teamwork and deception between people and AI.</p><p class="eg">Every decision and its reason is saved, so nothing is a black box.</p></div>
+        </div>
+        <h3>Why we built it</h3>
+        <p>Multiplayer games are the hardest kind to test, and the people who test them rarely say <em>why</em> they did something. AI agents can do both: fill the seats and explain themselves. We wanted to show that AI players aren't just opponents or bots. They can be <strong>the testing team</strong>, and their reasoning is the most valuable thing they produce. A heist game is the perfect test bench because it has everything that breaks multiplayer games: teamwork, timing, money, trust and betrayal.</p>
       </section>
 
       <!-- 2 -->
@@ -224,6 +273,24 @@
           <img src="/about/ledger.jpg" alt="The in-game decision ledger panel listing each agent's action and reason" loading="lazy" />
           <figcaption>The decision ledger in game (Tab). Each row shows the agent, its action, which model "harness" decided it, latency, and the reason in plain words.</figcaption>
         </figure>
+      </section>
+
+      <!-- session -->
+      <section id="session">
+        <h2><span class="n">04b</span>A game session, step by step</h2>
+        <p class="lede">About 8 minutes. Here is what happens, and what gets written down, in each phase.</p>
+        <div class="timeline">
+          <div class="step"><b>LOBBY</b><span class="t">until 2 humans ready</span><p>Everyone spawns on Second Street. Humans press R. Agents read their persona and goals.</p></div>
+          <div class="step"><b>PLAN</b><span class="t">90 s</span><p>The crew meets at the nightclub. Agents propose splits in their private BAND room. Trust starts at 50.</p></div>
+          <div class="step"><b>PREPARE</b><span class="t">120 s</span><p>Steal a car, buy stakes, scout the bank. The explorer wanders and reports dead ends.</p></div>
+          <div class="step"><b>HEIST</b><span class="t">180 s</span><p>Crack the vault (the hacker is 3× faster). The alarm rings. Cops arrive. Bags come out.</p></div>
+          <div class="step"><b>GETAWAY</b><span class="t">90 s</span><p>Race to the marina. Someone may betray a deal or tip off the police. The sky turns to night.</p></div>
+          <div class="step"><b>PAYOUT</b><span class="t">30 s</span><p>Deals settle, cash gets laundered, scores appear. The ledger is pushed to Bruin for the report.</p></div>
+        </div>
+        <p style="margin-top: 16px">
+          All through the session the <strong>radio</strong> plays real headlines (Telem), the crew's private messages are mirrored to a <strong>BAND</strong> room you can watch live, and every single
+          action from every player, human or AI, lands in the ledger with a timestamp, a position and, for agents, the reason.
+        </p>
       </section>
 
       <!-- 5 -->
@@ -363,6 +430,81 @@
         </div>
       </section>
 
+      <!-- sponsors -->
+      <section id="sponsors">
+        <h2><span class="n">07b</span>Sponsors: how each one is used, and why it fits</h2>
+        <p class="lede">Each sponsor does one real job in the game. Remove any of them and the game still runs (each has a stand-in "stub"), but you lose that job.</p>
+        <div class="diagram">
+          <svg viewBox="0 0 1000 300" role="img" aria-label="How sponsors connect: Runware makes the art and 3D models before the game; during the game BAND carries crew messages and Telem feeds the radio; after the game Bruin turns the ledger into the report.">
+            <defs><marker id="s" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#a99cbf" /></marker></defs>
+            <text x="150" y="30" fill="#a99cbf" font-size="14" text-anchor="middle" font-weight="700">BEFORE THE GAME</text>
+            <text x="500" y="30" fill="#a99cbf" font-size="14" text-anchor="middle" font-weight="700">DURING THE GAME</text>
+            <text x="850" y="30" fill="#a99cbf" font-size="14" text-anchor="middle" font-weight="700">AFTER THE GAME</text>
+            <rect x="40" y="60" width="220" height="200" rx="14" fill="#1f1433" stroke="#ff4fa3" stroke-width="2.5" />
+            <text x="150" y="92" fill="#ff9bd2" font-size="19" font-weight="800" text-anchor="middle">Runware</text>
+            <text x="150" y="122" fill="#ece6f5" font-size="13" text-anchor="middle">prompts → images + 3D</text>
+            <text x="150" y="150" fill="#a99cbf" font-size="12" text-anchor="middle">people · cars · buildings</text>
+            <text x="150" y="170" fill="#a99cbf" font-size="12" text-anchor="middle">boats · palms · dogs</text>
+            <text x="150" y="190" fill="#a99cbf" font-size="12" text-anchor="middle">billboards · wall photos</text>
+            <text x="150" y="226" fill="#ffd166" font-size="12" text-anchor="middle">pnpm assets · pnpm models</text>
+            <rect x="390" y="60" width="220" height="200" rx="14" fill="#2a1338" stroke="#ff4fa3" stroke-width="2" />
+            <text x="500" y="92" fill="#ece6f5" font-size="17" font-weight="800" text-anchor="middle">Neon Bay server</text>
+            <text x="500" y="118" fill="#a99cbf" font-size="12" text-anchor="middle">humans + AI agents play</text>
+            <rect x="410" y="135" width="180" height="48" rx="10" fill="#1f1433" stroke="#4fd1ff" stroke-width="2" />
+            <text x="500" y="156" fill="#4fd1ff" font-size="15" font-weight="800" text-anchor="middle">BAND</text>
+            <text x="500" y="174" fill="#a99cbf" font-size="11" text-anchor="middle">crew's private room</text>
+            <rect x="410" y="195" width="180" height="48" rx="10" fill="#1f1433" stroke="#ffd166" stroke-width="2" />
+            <text x="500" y="216" fill="#ffd166" font-size="15" font-weight="800" text-anchor="middle">Telem</text>
+            <text x="500" y="234" fill="#a99cbf" font-size="11" text-anchor="middle">real news on the radio</text>
+            <rect x="740" y="60" width="220" height="200" rx="14" fill="#1f1433" stroke="#7dffb0" stroke-width="2.5" />
+            <text x="850" y="92" fill="#7dffb0" font-size="19" font-weight="800" text-anchor="middle">Bruin</text>
+            <text x="850" y="122" fill="#ece6f5" font-size="13" text-anchor="middle">ledger → MotherDuck</text>
+            <text x="850" y="150" fill="#a99cbf" font-size="12" text-anchor="middle">5 report tables</text>
+            <text x="850" y="170" fill="#a99cbf" font-size="12" text-anchor="middle">17 quality checks</text>
+            <text x="850" y="190" fill="#a99cbf" font-size="12" text-anchor="middle">runs hourly in the cloud</text>
+            <text x="850" y="226" fill="#ffd166" font-size="12" text-anchor="middle">→ the playtest report</text>
+            <path d="M262 160 L388 160" stroke="#a99cbf" stroke-width="2" marker-end="url(#s)" />
+            <text x="325" y="150" fill="#a99cbf" font-size="11" text-anchor="middle">art loads</text>
+            <path d="M612 160 L738 160" stroke="#a99cbf" stroke-width="2" marker-end="url(#s)" />
+            <text x="675" y="150" fill="#a99cbf" font-size="11" text-anchor="middle">ledger rows</text>
+          </svg>
+        </div>
+        <div class="sponsors">
+          <div class="sponsor" style="--c: #ff4fa3">
+            <h4>Runware: the art department</h4>
+            <div class="what">What it is: an AI service that turns text descriptions into images, videos and 3D models.</div>
+            <p><b>How we use it:</b> nearly everything you see in the bay was described in words and generated by Runware. That covers the six crew and cop characters, the street pedestrians, the dog, three sports-car paint jobs, the police station, nightclub, pawn shop, exchange and four hotel designs, the yacht, the speedboat, the lifeguard towers, the palm trees, the rooftop billboards and the photo-real wall textures.</p>
+            <p><b>Why it fits:</b> the rules say "original work only, no real brands". With Runware every asset is new and made for this game from a prompt in the repo, so anyone can regenerate it. A whole 3D city cost about the price of lunch. Runware's 3D models come without skeletons, so we wrote a small auto-rigger that gives each person bones and a walk cycle.</p>
+            <dl><dt>Models</dt><dd>Meshy-6 (people, A-pose), Tripo v3.1 (cars, buildings, boats, props), Qwen-Image (billboards, wall photos)</dd><dt>In the code</dt><dd><code>packages/integrations/src/runware</code>, <code>pnpm assets</code>, <code>pnpm models</code></dd></dl>
+          </div>
+          <div class="sponsor" style="--c: #4fd1ff">
+            <h4>BAND: the crew's back room</h4>
+            <div class="what">What it is: a messaging platform built for AI agents, where agents and people share rooms.</div>
+            <p><b>How we use it:</b> every session opens a private BAND room for the crew. Whispers, deal offers, accepted deals and betrayals are posted there as they happen. A studio watching the test can open the room and read the crew scheming in real time.</p>
+            <p><b>Why it fits:</b> the most interesting part of a co-op game is what players say to each other in private. BAND gives that conversation a home outside the game, readable by humans, with each agent as a real participant. Police chatter and bribes are deliberately kept out.</p>
+            <dl><dt>Turned on by</dt><dd><code>CREW_CHANNEL=band</code></dd><dt>In the code</dt><dd><code>packages/integrations/src/band</code></dd></dl>
+          </div>
+          <div class="sponsor" style="--c: #ffd166">
+            <h4>Telem: the radio station's newsroom</h4>
+            <div class="what">What it is: a search service that finds fresh, real information from the web for AI apps.</div>
+            <p><b>How we use it:</b> when a session starts, the server asks Telem for this week's coastal news. Every 45 seconds the in-game station, <em>Velvet Static 96.6 FM</em>, reads a headline. Agents hear the radio too: it's part of what they observe.</p>
+            <p><b>Why it fits:</b> it makes every session a little different and grounded in the real world, which is good for players and for testing. Agents have to react to a world that changes, not a fixed script.</p>
+            <dl><dt>Turned on by</dt><dd><code>NEWS_FEED=telem</code></dd><dt>In the code</dt><dd><code>packages/integrations/src/telem</code></dd></dl>
+          </div>
+          <div class="sponsor" style="--c: #7dffb0">
+            <h4>Bruin: the analyst</h4>
+            <div class="what">What it is: a data pipeline tool that moves data into a warehouse and turns it into clean, checked tables.</div>
+            <p><b>How we use it:</b> when a session ends, its ledger (every action and reason) goes into a MotherDuck warehouse. A Bruin pipeline, running hourly in Bruin Cloud, builds the report tables: time per phase, issues by type, where players got stuck, the most common winning action sequences, and a position heat map. It checks the data with 17 quality checks.</p>
+            <p><b>Why it fits:</b> the playtest report is the product. Bruin turns thousands of raw decisions into a few tables a designer can read, every hour, without anyone running scripts by hand.</p>
+            <dl><dt>Turned on by</dt><dd><code>LEDGER_SINK=bruin</code></dd><dt>In the code</dt><dd><code>packages/integrations/src/bruin</code>, <code>pipelines/neon-bay-ledger</code></dd></dl>
+          </div>
+        </div>
+        <details>
+          <summary>Sponsors we did not use, and why</summary>
+          <p>Harness Router needed a separate model provider key before it would run any task, so we dropped it. Finch, Glasser, Casuro and Teamily were dropped because we had no keys for them. Every one of those features still has a stub, so they can be added later without changing the game.</p>
+        </details>
+      </section>
+
       <!-- 8 -->
       <section id="stack">
         <h2><span class="n">08</span>Stack and integrations</h2>
@@ -378,6 +520,26 @@
           <tr><td>Cross-session memory · voice</td><td>Milestone M7</td><td><span class="tag planned">Planned</span></td></tr>
         </table>
         <p style="margin-top: 20px">Every integration sits behind an interface with a stub, so the whole game runs offline with no keys. API keys stay on the server and never reach the browser.</p>
+      </section>
+      <!-- faq -->
+      <section id="faq">
+        <h2><span class="n">09</span>Words used on this page</h2>
+        <dl class="glossary">
+          <dt>Agent</dt><dd>An AI player. It looks at the game, decides what to do, and does it, just like a person with a controller.</dd>
+          <dt>Persona</dt><dd>The agent's personality and testing style: speedrunner, explorer, griefer or newcomer.</dd>
+          <dt>Ledger</dt><dd>The diary of the session: one line per action, saying who did what, where, when and why.</dd>
+          <dt>Playtest report</dt><dd>The summary a studio reads: issues, stuck points, winning strategies and a heat map, built from the ledger.</dd>
+          <dt>Server-authoritative</dt><dd>The game server is the referee. Players and agents can only ask to do things; the server decides what really happens.</dd>
+          <dt>Stub</dt><dd>A stand-in for an outside service, so the game still works with no internet and no keys.</dd>
+          <dt>Trust score</dt><dd>A number from 0 to 100 each agent keeps about every other player. Betrayals push it down, kept promises push it up.</dd>
+          <dt>Seed</dt><dd>A number that fixes the random choices, so a session can be replayed in exactly the same situation.</dd>
+        </dl>
+        <h2 style="margin-top: 40px">Common questions</h2>
+        <details><summary>Are the AI players cheating?</summary><p>No. They only see what a player standing there could see, and every action goes through the same server rules as a human's. If an agent finds an exploit, a human could too, which is the point.</p></details>
+        <details><summary>Do I need API keys to try it?</summary><p>No. Every outside service has a stub. Run <code>pnpm dev</code> and the whole game, agents included, works offline. Keys switch on the real services one by one.</p></details>
+        <details><summary>What did the art cost?</summary><p>All Runware images and 3D models together cost a few tens of dollars at most. Each asset's price is recorded in its manifest file. Re-running the scripts never pays twice for an asset that already exists.</p></details>
+        <details><summary>Do the agents really learn?</summary><p>They learn the way people at a table do: they remember who did what and adjust how much they trust each other. Carrying memories across sessions is the next milestone. Nothing is hidden: every memory is a readable sentence.</p></details>
+        <details><summary>Are the cars, buildings and people copied from anywhere?</summary><p>No. Every model was generated for this game from our own text descriptions, with no real brands, car makes, logos or characters. The few downloaded assets (sky, ground textures, lamps and bins) are public domain (CC0) and listed in ASSETS.md.</p></details>
       </section>
     </main>
     <footer>Neon Bay '86. Original work: no assets, names or designs from any existing game. Third-party assets are CC0 and listed in ASSETS.md. <a href="/">Play →</a></footer>
