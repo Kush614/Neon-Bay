@@ -1,3 +1,4 @@
+/* global fetch, Buffer, console */
 // Downloads the CC0 assets the client uses from Poly Haven (https://polyhaven.com, CC0 1.0)
 // into apps/client/public/cc0/. Re-runnable; skips files that already exist. Logged in ASSETS.md.
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
