@@ -1,7 +1,15 @@
 // One agent's observe -> decide -> act loop (SPEC.md section 12). Runs inside a worker in
 // production and in-process in tests.
 import { Client, type Room } from "@colyseus/sdk";
-import { MSG, ROOM_NAME, type ActionResult, type Decision, type JoinOptions, type PlayerEvent } from "@neon-bay/shared";
+import {
+  MSG,
+  ROOM_NAME,
+  type ActionEnvelope,
+  type ActionResult,
+  type JoinOptions,
+  type PlayerEvent,
+  type SpeechMessage,
+} from "@neon-bay/shared";
 import type { LlmClient } from "../llm/LlmClient.js";
 import { systemPrompt, type PersonaDef } from "../personas/types.js";
 import { decide, type DecideResult } from "./decide.js";
@@ -17,6 +25,7 @@ export const DECIDE_INTERVAL_MS = 4000;
 /** Minimum gap between event-triggered decisions, so a rejection can't spin the loop. */
 const MIN_TRIGGER_GAP_MS = 1000;
 const SESSION_LOG_SIZE = 30;
+const RECENT_SPEECH_SIZE = 10;
 
 export interface AgentRunnerOptions {
   persona: PersonaDef;
@@ -41,6 +50,7 @@ export class AgentRunner {
   private stopped = false;
   private lastActionResult: ActionResult | null = null;
   private readonly sessionLog: string[] = [];
+  private readonly recentSpeech: { from: string; text: string }[] = [];
   readonly decisions: DecisionRecord[] = [];
   private readonly system: string;
   private readonly log: (line: string) => void;
@@ -77,6 +87,16 @@ export class AgentRunner {
       this.remember(e.type === "arrived" ? `arrived at ${e.target}` : `could not reach ${e.target}: ${e.reason}`);
       this.trigger();
     });
+    room.onMessage(MSG.speech, (m: SpeechMessage) => {
+      if (m.fromId === room.sessionId) return;
+      this.recentSpeech.push({ from: m.fromName, text: m.whisper ? `(whispered) ${m.text}` : m.text });
+      if (this.recentSpeech.length > RECENT_SPEECH_SIZE) this.recentSpeech.shift();
+      this.remember(`${m.fromName} ${m.whisper ? "whispered" : "said"}: ${m.text}`);
+      // SPEC: decide immediately when spoken to.
+      const addressed = m.whisper || m.text.toLowerCase().includes(this.opts.persona.name.toLowerCase());
+      if (addressed) this.trigger();
+    });
+    room.onMessage(MSG.ledger, () => {}); // agents don't render the ledger panel
     room.onLeave(() => this.stop());
     // Wait for the first state so the first observation has our own player in it.
     await new Promise<void>((resolve) => {
@@ -120,13 +140,14 @@ export class AgentRunner {
         selfId: this.room.sessionId,
         lastActionResult: this.lastActionResult,
         recentEvents: [...this.sessionLog],
+        recentSpeech: [...this.recentSpeech],
       });
       if (!observation) return;
       this.lastDecisionAt = Date.now();
       const result = await decide(this.opts.llm, this.system, JSON.stringify(observation));
       if (this.stopped) return;
       this.decisions.push({ observation, result, at: Date.now() });
-      this.act(result.decision);
+      this.act(result);
       this.log(`${result.decision.action.type} (${result.latencyMs} ms${result.fellBack ? ", fell back" : ""}): ${result.decision.reason}`);
     } finally {
       this.busy = false;
@@ -137,11 +158,16 @@ export class AgentRunner {
     }
   }
 
-  private act(d: Decision): void {
+  /** Step 3 and 4: send the action with the metadata the server needs to write the ledger row. */
+  private act(r: DecideResult): void {
     if (!this.room) return;
-    // "wait" keeps doing whatever the character was already doing; nothing to send.
-    if (d.action.type !== "wait") this.room.send(MSG.action, d.action);
-    if (d.say) this.room.send(MSG.action, { type: "say", text: d.say });
+    const d = r.decision;
+    const meta = { reason: d.reason, trustChanges: d.trustChanges, harness: this.opts.llm.harness, latencyMs: r.latencyMs };
+    // "wait" changes nothing on the server, but it is still a decision, so it is sent for the ledger.
+    this.room.send(MSG.action, { action: d.action, meta } satisfies ActionEnvelope);
+    if (d.say && d.action.type !== "say") {
+      this.room.send(MSG.action, { action: { type: "say", text: d.say }, meta } satisfies ActionEnvelope);
+    }
   }
 
   async stop(): Promise<void> {
