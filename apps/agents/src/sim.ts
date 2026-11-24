@@ -1,0 +1,23 @@
+// pnpm sim -- --seed <n> [--verbose]: run one full headless session and print scores and issues.
+import { parseArgs } from "node:util";
+import { runSim } from "./sim/runSim.js";
+
+const { values } = parseArgs({
+  args: process.argv.slice(2).filter((a) => a !== "--"),
+  options: { seed: { type: "string", default: "1" }, verbose: { type: "boolean", short: "v", default: false } },
+});
+const seed = Number(values.seed);
+if (!Number.isInteger(seed)) {
+  console.error("--seed must be an integer");
+  process.exit(2);
+}
+
+const r = await runSim({ seed, log: values.verbose ? (l) => console.log(l) : undefined });
+const money = (n: number) => n.toLocaleString("en-US");
+console.log(`\nNeon Bay '86 headless sim, seed ${seed}`);
+console.log(`session ${r.sessionId}: ${r.completed ? "completed" : "DID NOT COMPLETE"} (${r.phases.join(" > ")})`);
+console.log(`${r.simulatedSeconds.toFixed(0)} s simulated in ${(r.wallMs / 1000).toFixed(1)} s; ${r.decisions} decisions, ${r.ledgerRows} ledger rows, ${r.bagsBanked} bags banked\n`);
+console.table(r.scores.map((s) => ({ player: s.name, role: s.role, score: money(s.score), clean: money(s.cleanCash), dirty: money(s.dirtyCash) })));
+console.log(`issues reported: ${r.issues.length}`);
+for (const e of r.issues) console.log(`  [${e.row.issue!.severity}] ${e.row.actorName} (${e.row.issue!.type}): ${e.row.issue!.description}`);
+process.exit(r.completed ? 0 : 1);

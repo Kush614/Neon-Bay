@@ -15,7 +15,8 @@
     "e2e": "playwright test",
     "typecheck": "pnpm -r --if-present run typecheck && tsc --noEmit -p e2e",
     "lint": "eslint .",
-    "ledger:export": "pnpm --filter @neon-bay/server ledger:export"
+    "ledger:export": "pnpm --filter @neon-bay/server ledger:export",
+    "sim": "pnpm --filter @neon-bay/agents sim"
   },
   "devDependencies": {
     "@colyseus/better-call": "^1.3.4",

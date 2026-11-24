@@ -6,15 +6,16 @@
   "scripts": {
     "dev": "tsx src/index.ts",
     "start": "tsx src/index.ts",
-    "typecheck": "tsc --noEmit -p ."
+    "typecheck": "tsc --noEmit -p .",
+    "sim": "tsx src/sim.ts"
   },
   "dependencies": {
     "@colyseus/sdk": "^0.18.10",
     "@neon-bay/shared": "workspace:*",
-    "zod": "^4.6.7"
+    "zod": "^4.6.7",
+    "@neon-bay/server": "workspace:*"
   },
   "devDependencies": {
-    "@neon-bay/server": "workspace:*",
     "tsx": "^4.23.15"
   }
 }
