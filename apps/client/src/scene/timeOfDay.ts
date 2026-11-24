@@ -1,13 +1,15 @@
-// One timeOfDay value from 0 (golden hour) to 1 (night) drives the sun, sky, fog, windows and
-// neon (SPEC.md section 8). It follows the session: plan starts at golden hour and the
-// getaway ends at night. ?tod=0..1 pins it, for screenshots.
+// One timeOfDay value drives the sun, sky, fog, windows and neon (SPEC.md section 8):
+// 0 is a sunny midday, GOLDEN (0.4) is golden hour and 1 is night. It follows the session: the
+// lobby and plan are in full sun, the heist runs into sunset and the getaway ends at night.
+// (The spec started at golden hour; the project owner asked for a sunny sky, README decisions.)
+// ?tod=0..1 pins it, for screenshots.
 import { PHASE_SECONDS, type Phase } from "@neon-bay/shared";
 import { Color, MathUtils } from "three";
 
 const ANCHORS: Record<Phase, [number, number]> = {
   lobby: [0, 0],
-  plan: [0, 0.2],
-  prepare: [0.2, 0.45],
+  plan: [0, 0.1],
+  prepare: [0.1, 0.45],
   heist: [0.45, 0.75],
   getaway: [0.75, 1],
   payout: [1, 1],
@@ -28,14 +30,36 @@ export function targetTimeOfDay(phase: Phase, timeLeft: number): number {
 /** Shared, mutable time of day; updated once per frame by <TimeOfDayDriver>. */
 export const tod = { value: PINNED_TOD ?? 0 };
 
-const tmp = new Color();
-/** Colour ramp across keyframes at t = 0, 0.5, 1. */
-export function ramp(t: number, stops: [string, string, string], out = tmp): Color {
-  const [a, b, c] = stops;
-  return t < 0.5 ? out.set(a).lerp(new Color(b), t * 2) : out.set(b).lerp(new Color(c), (t - 0.5) * 2);
+/** Where golden hour falls on the 0..1 timeline; before it is daytime. */
+export const GOLDEN = 0.4;
+
+/** 0 at golden hour, 1 at night (0 all through the day): the old golden-to-night scale. */
+export function dusk(t: number): number {
+  return MathUtils.clamp((t - GOLDEN) / (1 - GOLDEN), 0, 1);
 }
 
-/** Neon and window brightness: modest at golden hour, full at night. */
+/** Daylight colours hold until here, then warm toward golden hour (the sky photo is blue). */
+const WARM_FROM = 0.18;
+
+/** 1 through the day, easing to 0 by golden hour. */
+export function daylight(t: number): number {
+  return 1 - MathUtils.smoothstep(t, WARM_FROM, GOLDEN);
+}
+
+const tmp = new Color();
+const tmp2 = new Color();
+/**
+ * Colour ramp: `day` at t = 0, then the golden-hour, dusk and night stops across the rest of
+ * the timeline (golden at GOLDEN, dusk halfway to night, night at 1).
+ */
+export function ramp(t: number, stops: [string, string, string], day: string, out = tmp): Color {
+  const [a, b, c] = stops;
+  if (t < GOLDEN) return out.set(day).lerp(tmp2.set(a), MathUtils.smoothstep(t, WARM_FROM, GOLDEN));
+  const d = dusk(t);
+  return d < 0.5 ? out.set(a).lerp(tmp2.set(b), d * 2) : out.set(b).lerp(tmp2.set(c), (d - 0.5) * 2);
+}
+
+/** Neon and window brightness: off in the sun, modest at golden hour, full at night. */
 export function nightGlow(t: number): number {
-  return MathUtils.smoothstep(t, 0.15, 0.85);
+  return MathUtils.smoothstep(t, GOLDEN - 0.05, 0.9);
 }

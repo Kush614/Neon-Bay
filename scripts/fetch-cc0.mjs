@@ -13,7 +13,8 @@ const TEXTURES = {
   leafy_grass: ["Diffuse", "nor_gl", "Rough"], // park
   large_grey_tiles: ["Diffuse", "nor_gl", "Rough"], // pavements
 };
-const HDRI = "belfast_sunset_puresky";
+// Sunny midday sky (the start of every session) and the sunset sky for golden hour onward.
+const HDRIS = ["kloofendal_48d_partly_cloudy_puresky", "belfast_sunset_puresky"];
 const MODELS = ["street_lamp_01", "metal_trash_can"];
 
 async function save(url, file) {
@@ -31,7 +32,7 @@ for (const [id, maps] of Object.entries(TEXTURES)) {
   const f = await files(id);
   for (const m of maps) await save(f[m]["1k"].jpg.url, `textures/${id}_${m.toLowerCase()}.jpg`);
 }
-await save((await files(HDRI)).hdri["2k"].hdr.url, `hdri/${HDRI}_2k.hdr`);
+for (const id of HDRIS) await save((await files(id)).hdri["2k"].hdr.url, `hdri/${id}_2k.hdr`);
 for (const id of MODELS) {
   const g = (await files(id)).gltf["1k"].gltf;
   await save(g.url, `models/${id}/${id}.gltf`);

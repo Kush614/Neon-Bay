@@ -92,11 +92,11 @@ export function Ocean() {
     const t = tod.value;
     const u = material.uniforms;
     u.uTime!.value += dt;
-    (u.uSky!.value as Color).copy(ramp(t, ["#f6b893", "#b45f8f", "#141233"]));
-    (u.uShallow!.value as Color).copy(ramp(t, ["#2fa3a8", "#2b7f94", "#0f3046"]));
-    (u.uDeep!.value as Color).copy(ramp(t, ["#0c3d5c", "#0b2c4a", "#050f22"]));
+    (u.uSky!.value as Color).copy(ramp(t, ["#f6b893", "#b45f8f", "#141233"], "#a9d2f5"));
+    (u.uShallow!.value as Color).copy(ramp(t, ["#2fa3a8", "#2b7f94", "#0f3046"], "#3cc8c8"));
+    (u.uDeep!.value as Color).copy(ramp(t, ["#0c3d5c", "#0b2c4a", "#050f22"], "#0b5a8a"));
     (u.uSunDir!.value as Vector3).copy(sunDirection(t)).normalize();
-    (u.uSunColor!.value as Color).copy(ramp(t, ["#ffd2a0", "#ff7a4a", "#2a2a55"]));
+    (u.uSunColor!.value as Color).copy(ramp(t, ["#ffd2a0", "#ff7a4a", "#2a2a55"], "#fffaf0"));
   });
   return (
     <mesh position={[700, WATER_Y, 0]} rotation-x={-Math.PI / 2} material={material}>
