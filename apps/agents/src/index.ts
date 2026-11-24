@@ -12,6 +12,22 @@ import { PERSONAS } from "./personas/index.js";
 const serverUrl = process.env.GAME_SERVER_URL ?? `http://localhost:${DEFAULT_SERVER_PORT}`;
 const ids = (process.env.AGENTS ?? Object.keys(PERSONAS).join(",")).split(",").map((s) => s.trim()).filter(Boolean);
 
+/** `pnpm dev` starts the server and the agents together; wait until the server answers HTTP. */
+async function waitForServer(url: string, timeoutMs = 60_000): Promise<void> {
+  const deadline = Date.now() + timeoutMs;
+  for (let attempt = 0; ; attempt++) {
+    try {
+      await fetch(url, { signal: AbortSignal.timeout(2000) });
+      return;
+    } catch {
+      if (Date.now() > deadline) throw new Error(`game server at ${url} did not answer within ${timeoutMs / 1000} s`);
+      if (attempt === 0) console.log(`[agents] waiting for the game server at ${url}…`);
+      await new Promise((r) => setTimeout(r, 500));
+    }
+  }
+}
+await waitForServer(serverUrl);
+
 const workers: Worker[] = [];
 for (const personaId of ids) {
   if (!PERSONAS[personaId]) {
