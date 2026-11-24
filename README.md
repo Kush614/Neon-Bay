@@ -9,6 +9,8 @@ pnpm dev:client        # client only; runs offline if no server  (?cam=overview 
 pnpm typecheck && pnpm test
 pnpm e2e               # two-browser smoke test (starts both servers if needed)
 pnpm ledger:export -- --session <id>   # no --session lists recorded sessions
+pnpm sim -- --seed 1   # full headless session (stubbed models unless LLM_PROVIDER says otherwise); -v for a trace
+MIN_HUMANS=1 pnpm dev:server           # let one human start the heist while testing alone (the spec's default is 2)
 ```
 
 ## Status
@@ -19,7 +21,8 @@ pnpm ledger:export -- --session <id>   # no --session lists recorded sessions
 | M2 Multiplayer | done |
 | M3 First agent | done |
 | M4 Ledger | done |
-| M5–M10 | not started |
+| M5 Full crew and rules | done |
+| M6–M10 | not started |
 
 ## Decisions the spec left open
 
@@ -29,6 +32,13 @@ pnpm ledger:export -- --session <id>   # no --session lists recorded sessions
 - **Businesses.** The four fictional exchange businesses are Citrus Grove Juices, Palmetto Video Rental, Seaspray Telecom and Coquina Realty Trust.
 - **Netcode.** Clients send a zod-validated `input` message (world-space direction, run flag, sequence number) each physics step while moving, on change, and as a 1 s heartbeat when idle. The server holds the latest input and simulates at 20 Hz with 3 sub-steps of 1/60 s, matching the client's prediction step. Input longer than 1 is clamped, and any per-step horizontal move faster than run speed (or 80% of it with a bag) is reverted and counted. Invalid messages get a `rejected` reply with the reason instead of a disconnect. The client reconciles by comparing the server position with its own prediction at the same input sequence, correcting gradually and snapping beyond 4 m. Colyseus 0.18's built-in `defineInput`/prediction framework was not used.
 - **Colyseus dependency pinning.** `express` and `@colyseus/better-call` are root dev dependencies on purpose. Without them pnpm resolves two peer-variants of `@colyseus/core` (one through `colyseus`, one through `@colyseus/ws-transport`), the transport looks up rooms in a matchmaker that never created them, and every join fails with "seat reservation expired". Do not remove them.
-- **Agents.** `apps/agents` spawns one `worker_threads` worker per persona (`AGENTS=rico` selects which). Each worker joins through `@colyseus/sdk` like a human client and sends only `action` messages. `move_to` becomes a recast navmesh path on the server, built from the same box data as the colliders, and the server steers the agent's body with ordinary movement input, so agents obey the same physics and speed checks as humans. `LLM_PROVIDER=stub` (the default) replays each persona's `stubScript`; real providers arrive with M5.
+- **Agents.** `apps/agents` spawns one `worker_threads` worker per persona (`AGENTS=rico` selects which). Each worker joins through `@colyseus/sdk` like a human client and sends only `action` messages. `move_to` becomes a recast navmesh path on the server, built from the same box data as the colliders, and the server steers the agent's body with ordinary movement input, so agents obey the same physics and speed checks as humans. `LLM_PROVIDER=stub` (the default) plays each persona's deterministic stub policy; `LLM_PROVIDER=anthropic` uses Claude (`claude-opus-5-5`, `LLM_MODEL`/`LLM_EFFORT` override) at low effort to fit the 4 s cadence, with the persona prompt cached and the API's server-side refusal fallback on.
 - **Ledger rows.** Agents send each action as `{ action, meta }`, where `meta` carries the reason, trust changes, harness, latency and a past-session flag. The server owns tick, phase and position, so it writes the row: one per action received, including `wait` and rejected actions. SQLite also stores the outcome (`ok`, `result`) and the past-session flag beside the spec's `LedgerRow`; the JSONL file holds exactly `LedgerRow`. Humans' rows always have an empty reason and no harness. Data lives in `data/` (override with `NEON_BAY_DATA_DIR`; tests use a temp dir).
 - **Speech.** `say` reaches players within 30 m and `whisper` reaches only its recipient. Both were added in M4, because a model reply with `say` would otherwise be rejected, and a rejection triggers an immediate re-decide.
+- **GameSession.** All rules live in `apps/server/src/game/GameSession.ts`, which has no networking. `HeistRoom` drives it in real time and copies it into the Colyseus schema; `pnpm sim` drives it with in-process agents on a virtual clock (a 510 s session runs in about 2 s). Agents talk to either through one `AgentTransport` interface.
+- **Lobby.** Humans send `ready`; the lobby ends when `MIN_HUMANS` (default 2, per the spec) are ready. The headless sim uses 0. Players can walk around in the lobby.
+- **Bank interior.** The bank is a hollow shell with a front door on Second Street, a back door onto the alley, and a partition with a door into the vault room. The vault panel sits at (44, −76) and counts anyone within 2.5 m. The navmesh covers the interior.
+- **Deals.** `splitPercent` is the share of the proposer's dirty cash that goes to the recipient when deals settle at the start of `payout`. Only the recipient can accept or reject. Deals are sent only to their two parties, never broadcast.
+- **Bags.** A bag is banked as 50,000 dirty cash the moment its carrier is within 7 m of the marina, during `heist` or `getaway`. A bag still carried when the session ends is lost; a bag carried by a player who disconnects goes back in the vault. Laundering arrives in M6, so M5 scores (clean cash plus stakes) are all 0.
+- **Vehicles.** Spec actions have no enter/exit, so `drive_to` gets into the nearest free car within 4 m, and `move_to` from a car gets out first. Humans press E (`use_vehicle` message) and drive with W/S/A/D, sent as `throttle`/`steer` on the input message. Cars are kinematic arcade boxes with a road-graph autopilot that brakes into its stops; the client renders them interpolated (no prediction while driving) with kinematic colliders, so walking prediction still bumps into them.
+- **Cars at the car park** sit in a row the pedestrian navmesh treats as blocked, and path following sidesteps when it stalls against a car or another player.
