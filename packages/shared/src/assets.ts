@@ -67,7 +67,12 @@ export const BILLBOARD_SPOTS: readonly BillboardSpot[] = [
   { assetId: "billboard_seaspray", x: LOCATIONS.car_park.footprint.maxX + 2, y: 6, z: 0, width: 12, height: 6, rotationY: -Math.PI / 2 },
 ];
 
+const FACADE = (what: string) =>
+  `A straight-on orthographic photograph of ${what}, perfectly flat and front-facing, filling the entire frame edge to edge, evenly lit by soft daylight, no perspective, no sky, no ground, no people, no trees, no signs, no text. Seamless tileable texture.`;
+
 export const GENERATED_ASSETS: readonly GeneratedAssetSpec[] = [
+  { id: "facade_bank", kind: "texture", width: 1024, height: 1024, prompt: FACADE("a 1930s art deco bank wall in warm sandstone: fluted pilasters between tall bronze-framed windows, carved stone bands, polished granite base") },
+  { id: "facade_city", kind: "texture", width: 1024, height: 1024, prompt: FACADE("a pastel stucco 1980s Miami Beach apartment building wall: a regular grid of four by four aluminium-framed windows with dark glass, thin white eyebrow ledges above each row") },
   ...ROOFTOP_BILLBOARDS.map(({ id, prompt }) => ({ id, kind: "billboard" as const, prompt, width: 1024, height: 512 })),
   {
     id: "billboard_seaspray",

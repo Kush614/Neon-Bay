@@ -15,7 +15,11 @@ const CAMERA_HEIGHT = 1.6; // look-at height above the feet
 const MIN_PITCH = -0.2;
 const MAX_PITCH = 1.1;
 /** `?cam=overview` swaps the follow camera for a fixed aerial view of the whole layout (debug). */
-const OVERVIEW = new URLSearchParams(window.location.search).get("cam") === "overview";
+const CAM = new URLSearchParams(window.location.search).get("cam");
+/** `?cam=x,y,z,lookX,lookY,lookZ` pins the camera (debug screenshots). */
+const PINNED = CAM && CAM.includes(",") ? CAM.split(",").map(Number) : null;
+const OVERVIEW = CAM === "overview" || PINNED !== null;
+const VIEW = PINNED && PINNED.length === 6 ? PINNED : [-60, 260, 260, 130, 0, 0];
 
 // Reconciliation tuning.
 const SNAP_DISTANCE = 4; // beyond this, jump straight to the server position
@@ -208,8 +212,8 @@ export function LocalPlayer() {
       dy = Math.atan2(Math.sin(dy), Math.cos(dy));
       yaw.current += dy * Math.min(1, dt * 2.5);
       if (OVERVIEW) {
-        camera.position.set(-60, 260, 260);
-        camera.lookAt(130, 0, 0);
+        camera.position.set(VIEW[0]!, VIEW[1]!, VIEW[2]!);
+        camera.lookAt(VIEW[3]!, VIEW[4]!, VIEW[5]!);
       } else followCamera({ x: car.x, y: car.y + 0.4, z: car.z }, dt, 9);
       if (state.clock.elapsedTime - lastStore.current > 0.1) {
         lastStore.current = state.clock.elapsedTime;
@@ -230,8 +234,8 @@ export function LocalPlayer() {
     if (bodyMesh) bodyMesh.position.y = moving ? Math.abs(Math.sin(state.clock.elapsedTime * (run ? 14 : 9))) * (run ? 0.12 : 0.06) : 0;
 
     if (OVERVIEW) {
-      camera.position.set(-60, 260, 260);
-      camera.lookAt(130, 0, 0);
+      camera.position.set(VIEW[0]!, VIEW[1]!, VIEW[2]!);
+      camera.lookAt(VIEW[3]!, VIEW[4]!, VIEW[5]!);
     } else {
       followCamera(feet, dt);
     }

@@ -1,6 +1,8 @@
 import { Html } from "@react-three/drei";
 import { useRapier } from "@react-three/rapier";
-import { useEffect, useMemo } from "react";
+import { Suspense, useEffect, useMemo } from "react";
+import { useGeneratedModels } from "../generated/manifest.js";
+import { PlacedModel } from "../generated/GeneratedProps.js";
 import {
   BANDS,
   CROSS_STREETS,
@@ -40,6 +42,30 @@ function FlatRect({ r, y, surface }: { r: Rect; y: number; surface: Surface }) {
   );
 }
 
+/** Moored boats and the getaway speedboat: Runware models when generated, boxes otherwise. */
+function Boats() {
+  const models = useGeneratedModels();
+  return (
+    <>
+      {[...MOORED_BOATS, SPEEDBOAT].map((b) => {
+        const e = models?.get(b.id === SPEEDBOAT.id ? "speedboat" : "yacht");
+        if (e)
+          return (
+            <Suspense key={b.id} fallback={null}>
+              <PlacedModel entry={e} x={b.x} y={WATER_Y - 0.25} z={b.z} length={b.length} />
+            </Suspense>
+          );
+        return (
+          <mesh key={b.id} position={[b.x, WATER_Y + 0.6, b.z]} castShadow>
+            <boxGeometry args={[b.length * 0.35, 1.4, b.length]} />
+            <meshStandardMaterial color={b.id === SPEEDBOAT.id ? "#ff4fa3" : "#f2f2f2"} />
+          </mesh>
+        );
+      })}
+    </>
+  );
+}
+
 /** The world, built from packages/shared/src/world.ts and dressed with CC0 surfaces. */
 export function World() {
   const { rapier, world } = useRapier();
@@ -73,12 +99,7 @@ export function World() {
       <StreetFurniture />
       <Palms />
 
-      {[...MOORED_BOATS, SPEEDBOAT].map((b) => (
-        <mesh key={b.id} position={[b.x, WATER_Y + 0.6, b.z]} castShadow>
-          <boxGeometry args={[b.length * 0.35, 1.4, b.length]} />
-          <meshStandardMaterial color={b.id === SPEEDBOAT.id ? "#ff4fa3" : "#f2f2f2"} />
-        </mesh>
-      ))}
+      <Boats />
 
       {Object.values(LOCATIONS).map((loc) => (
         <Html

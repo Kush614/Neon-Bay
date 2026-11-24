@@ -1,12 +1,15 @@
-// Seeded ambient cars and pedestrians for capture mode only. Purely visual: the server
-// never sees them, so they don't affect the game; they exist to give the dataset variety.
+// Seeded ambient NPCs: traffic, parked cars, pedestrians and dogs. Purely visual: the server
+// never sees them, so they never affect the game, the agents or the ledger. Used in normal play
+// (scenery) and in capture mode (dataset variety). ?npcs=0 turns them off.
 import { useFrame } from "@react-three/fiber";
-import { useMemo, useRef } from "react";
+import { Suspense, useMemo, useRef } from "react";
 import type { Group } from "three";
 import { CROSS_STREET_Z, ROADS } from "@neon-bay/shared";
 import { Character } from "../entities/Character.js";
 import { CarModel } from "../entities/Vehicles.js";
 import { CAPTURE_SEED, mulberry32 } from "./mode.js";
+import { useGeneratedModels } from "../generated/manifest.js";
+import { Dog } from "../generated/GeneratedProps.js";
 
 const CAR_COLORS = ["#ff5fa2", "#3fd0d4", "#ffd166", "#9b7bff", "#f4f1ea", "#2b2d42", "#e63946", "#2a9d8f", "#c0c0c8", "#f77f00"];
 const SHIRTS = ["#ff4fa3", "#4fd1ff", "#ffd166", "#7dffb0", "#ff8a5c", "#b38cff", "#f4f1ea", "#3a86ff"];
@@ -47,16 +50,16 @@ interface Walker {
   dir: 1 | -1;
 }
 
-function plan(seed: number) {
+function plan(seed: number, scale: { moving: number; parked: number; walkers: number }) {
   const rng = mulberry32(seed * 104729 + 17);
   const pick = <T,>(xs: readonly T[]) => xs[Math.floor(rng() * xs.length)]!;
   const cars: (MovingCar | ParkedCar)[] = [];
   const ids = [...nodes.keys()];
-  for (let i = 0; i < 14; i++) {
+  for (let i = 0; i < scale.moving; i++) {
     const from = pick(ids);
     cars.push({ kind: "moving", id: `ambient_car_${i}`, color: pick(CAR_COLORS), from, to: pick(adjacency.get(from)!), t: rng(), speed: 7 + rng() * 7 });
   }
-  for (let i = 0; i < 18; i++) {
+  for (let i = 0; i < scale.parked; i++) {
     const id = `ambient_parked_${i}`;
     if (rng() < 0.6) {
       const z = pick(CROSS_STREET_Z) + (rng() < 0.5 ? -4.6 : 4.6);
@@ -67,7 +70,7 @@ function plan(seed: number) {
   }
   // Pedestrians walk back and forth along sidewalks, the promenade and the beach.
   const walkers: Walker[] = [];
-  for (let i = 0; i < 26; i++) {
+  for (let i = 0; i < scale.walkers; i++) {
     const r = rng();
     let a: XZ;
     let b: XZ;
@@ -109,8 +112,13 @@ function placeMoving(c: MovingCar, g: Group) {
   g.userData.captureLabel = { id: c.id, cls: "Car", heading };
 }
 
-export function AmbientTraffic() {
-  const { cars, walkers, rng } = useMemo(() => plan(CAPTURE_SEED), []);
+const CAPTURE_SCALE = { moving: 14, parked: 18, walkers: 26 };
+const GAME_SCALE = { moving: 9, parked: 10, walkers: 18 };
+
+export function AmbientTraffic({ game = false }: { game?: boolean }) {
+  const { cars, walkers, rng } = useMemo(() => plan(CAPTURE_SEED, game ? GAME_SCALE : CAPTURE_SCALE), [game]);
+  const models = useGeneratedModels();
+  const dog = models?.get("dog");
   const carRefs = useRef<(Group | null)[]>([]);
   const walkerRefs = useRef<(Group | null)[]>([]);
 
@@ -166,7 +174,15 @@ export function AmbientTraffic() {
       ))}
       {walkers.map((w, i) => (
         <group key={w.id} ref={(g) => void (walkerRefs.current[i] = g)}>
-          <Character name="" color={w.color} showName={false} label={{ id: w.id, cls: "Pedestrian" }} />
+          <Character name={game ? `npc_${w.id}` : ""} color={w.color} showName={false} label={{ id: w.id, cls: "Pedestrian" }} />
+          {/* Every third walker has a dog trotting at heel. */}
+          {game && dog && i % 3 === 0 && (
+            <Suspense fallback={null}>
+              <group position={[0.7, 0, -0.5]}>
+                <Dog entry={dog} />
+              </group>
+            </Suspense>
+          )}
         </group>
       ))}
     </>

@@ -1,6 +1,26 @@
 {
-  "generatedAt": "2026-11-24T01:55:42.925Z",
+  "generatedAt": "2026-11-24T03:06:58.145Z",
   "assets": [
+    {
+      "id": "facade_bank",
+      "kind": "texture",
+      "path": "/generated/facade_bank.png",
+      "prompt": "A straight-on orthographic photograph of a 1930s art deco bank wall in warm sandstone: fluted pilasters between tall bronze-framed windows, carved stone bands, polished granite base, perfectly flat and front-facing, filling the entire frame edge to edge, evenly lit by soft daylight, no perspective, no sky, no ground, no people, no trees, no signs, no text. Seamless tileable texture.",
+      "generator": "runware",
+      "model": "alibaba:qwen-image@3.0",
+      "seed": 1524594926,
+      "costUsd": 0.03
+    },
+    {
+      "id": "facade_city",
+      "kind": "texture",
+      "path": "/generated/facade_city.png",
+      "prompt": "A straight-on orthographic photograph of a pastel stucco 1980s Miami Beach apartment building wall: a regular grid of four by four aluminium-framed windows with dark glass, thin white eyebrow ledges above each row, perfectly flat and front-facing, filling the entire frame edge to edge, evenly lit by soft daylight, no perspective, no sky, no ground, no people, no trees, no signs, no text. Seamless tileable texture.",
+      "generator": "runware",
+      "model": "alibaba:qwen-image@3.0",
+      "seed": 924270926,
+      "costUsd": 0.03
+    },
     {
       "id": "billboard_harbor_cola",
       "kind": "billboard",

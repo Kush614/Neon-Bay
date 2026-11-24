@@ -24,8 +24,15 @@ export function useGeneratedModels(): Map<string, GeneratedModelEntry> | null {
 }
 
 /** Which generated character a player uses: crew by name, cops share one, humans the tourist. */
+const NPC_POOL = ["tourist", "jogger", "skater", "beachgoer", "retiree"] as const;
+
 export function characterModelId(name: string, role?: string): string {
   const n = name.toLowerCase();
+  if (n.startsWith("npc_")) {
+    let h = 0;
+    for (const ch of n) h = (h * 31 + ch.charCodeAt(0)) | 0;
+    return NPC_POOL[Math.abs(h) % NPC_POOL.length]!;
+  }
   if (["rico", "marisol", "dex", "opal"].includes(n)) return n;
   if (role === "cop" || n === "vega" || n === "burke") return "cop";
   return "tourist";

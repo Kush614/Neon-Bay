@@ -9,6 +9,8 @@ import { DuskLighting, TimeOfDayDriver } from "./scene/DuskLighting.js";
 import { Effects } from "./scene/Effects.js";
 import { NeonDriver } from "./scene/Props.js";
 import { QUALITY } from "./scene/quality.js";
+
+const NPCS = new URLSearchParams(location.search).get("npcs") !== "0";
 import { World } from "./scene/World.js";
 import { Billboards } from "./scene/Billboards.js";
 import { AmbientTraffic } from "./capture/AmbientTraffic.js";
@@ -40,7 +42,7 @@ export function App() {
             <LocalPlayer />
             <RemotePlayers />
             <Vehicles />
-            {CAPTURE && <AmbientTraffic />}
+            {CAPTURE ? <AmbientTraffic /> : NPCS && <AmbientTraffic game />}
             {CAPTURE && <CaptureRig />}
           </Physics>
           {!CAPTURE && <Effects />}

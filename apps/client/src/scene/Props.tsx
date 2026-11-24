@@ -103,7 +103,7 @@ export function Palms() {
   if (palm)
     return (
       <Suspense fallback={null}>
-        <GeneratedPalms entry={palm} count={QUALITY.palms} />
+        <GeneratedPalms entry={palm} count={Math.round(QUALITY.palms * 0.5)} />
       </Suspense>
     );
   return <ProceduralPalms />;

@@ -31,6 +31,19 @@ function texture(c: HTMLCanvasElement, srgb: boolean): Texture {
   return t;
 }
 
+/** The Runware-generated bank wall: one tile spans 10 m and the full 12 m height. */
+let bankCached: Texture | null = null;
+export function bankFacade(): Texture {
+  if (bankCached) return bankCached;
+  const t = new TextureLoader().load("/generated/facade_bank.png");
+  t.wrapS = t.wrapT = RepeatWrapping;
+  t.colorSpace = SRGBColorSpace;
+  t.anisotropy = 8;
+  t.repeat.set((BAY * TILES) / 10, (STOREY * TILES) / 12);
+  bankCached = t;
+  return t;
+}
+
 export interface FacadeTextures {
   map: Texture;
   emissive: Texture;
@@ -96,21 +109,61 @@ export function facadeTextures(): FacadeTextures {
   baseCtx.fillRect(0, 0, PX * TILES, PX * TILES);
   baseCtx.drawImage(layer, 0, 0);
   const map = texture(base, true);
-  const img = new Image();
-  img.onload = () => {
-    const metres = 4; // the plaster scan covers about 4 m
-    const px = (metres / BAY) * PX;
-    for (let yy = 0; yy < PX * TILES; yy += px) for (let xx = 0; xx < PX * TILES; xx += px) baseCtx.drawImage(img, xx, yy, px, px);
-    baseCtx.fillStyle = "rgba(255,250,240,0.35)"; // lift it toward painted stucco
-    baseCtx.fillRect(0, 0, PX * TILES, PX * TILES);
-    baseCtx.drawImage(layer, 0, 0);
-    map.needsUpdate = true;
+  const glowTex = texture(glow, true);
+  const roughTex = texture(rough, false);
+  // Preferred: the Runware-generated photo wall (a 4 x 4 window grid, like this atlas). Its dark
+  // glass becomes the night-window mask. Fallback: CC0 plaster under the canvas windows.
+  const photo = new Image();
+  photo.onload = () => {
+    const N = PX * TILES;
+    baseCtx.drawImage(photo, 0, 0, N, N);
+    const px = baseCtx.getImageData(0, 0, N, N);
+    const gl = g.getImageData(0, 0, N, N);
+    const ro = r.getImageData(0, 0, N, N);
+    const cell = N / TILES;
+    const lit: string[] = [];
+    for (let i = 0; i < TILES * TILES; i++) {
+      const roll = rnd();
+      lit.push(roll < 0.42 ? (roll < 0.06 ? "#7fe6ff" : roll < 0.12 ? "#ff9ad5" : "#ffc98a") : "");
+    }
+    for (let y = 0; y < N; y++) {
+      for (let x = 0; x < N; x++) {
+        const k = (y * N + x) * 4;
+        const lum = (0.2126 * px.data[k]! + 0.7152 * px.data[k + 1]! + 0.0722 * px.data[k + 2]!) / 255;
+        const glass = lum < 0.42;
+        const c = lit[Math.floor(y / cell) * TILES + Math.floor(x / cell)]!;
+        const col = glass && c ? parseInt(c.slice(1), 16) : 0;
+        gl.data[k] = (col >> 16) & 255;
+        gl.data[k + 1] = (col >> 8) & 255;
+        gl.data[k + 2] = col & 255;
+        gl.data[k + 3] = 255;
+        const rv = glass ? 30 : 215;
+        ro.data[k] = ro.data[k + 1] = ro.data[k + 2] = rv;
+        ro.data[k + 3] = 255;
+      }
+    }
+    g.putImageData(gl, 0, 0);
+    r.putImageData(ro, 0, 0);
+    map.needsUpdate = glowTex.needsUpdate = roughTex.needsUpdate = true;
   };
-  img.src = `${PLASTER}diffuse.jpg`;
+  photo.onerror = () => {
+    const img = new Image();
+    img.onload = () => {
+      const metres = 4; // the plaster scan covers about 4 m
+      const px = (metres / BAY) * PX;
+      for (let yy = 0; yy < PX * TILES; yy += px) for (let xx = 0; xx < PX * TILES; xx += px) baseCtx.drawImage(img, xx, yy, px, px);
+      baseCtx.fillStyle = "rgba(255,250,240,0.35)"; // lift it toward painted stucco
+      baseCtx.fillRect(0, 0, PX * TILES, PX * TILES);
+      baseCtx.drawImage(layer, 0, 0);
+      map.needsUpdate = true;
+    };
+    img.src = `${PLASTER}diffuse.jpg`;
+  };
+  photo.src = "/generated/facade_city.png";
   const normal = new TextureLoader().load(`${PLASTER}nor_gl.jpg`);
   normal.wrapS = normal.wrapT = RepeatWrapping;
   normal.repeat.set((BAY * TILES) / 4, (STOREY * TILES) / 4);
-  cached = { map, emissive: texture(glow, true), roughness: texture(rough, false), normal };
+  cached = { map, emissive: glowTex, roughness: roughTex, normal };
   return cached;
 }
 

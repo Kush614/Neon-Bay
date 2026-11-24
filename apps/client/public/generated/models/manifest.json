@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-24T02:57:44.705Z",
+  "generatedAt": "2026-11-24T03:14:44.830Z",
   "models": [
     {
       "id": "car_white",
@@ -36,6 +36,190 @@
       "seed": 18442169,
       "costUsd": 0.5,
       "prompt": "An original 1980s wedge-shaped two-door sports coupe, low and sleek, sharp creased lines, pop-up headlights, a full-width red tail-light bar across the rear, a small rear wing, black five-spoke alloy wheels, tinted windows, glossy teal paint. Realistic game asset. No logos, no badges, no text, no license plate lettering."
+    },
+    {
+      "id": "bld_police_station",
+      "file": "/generated/models/bld_police_station.glb",
+      "kind": "building",
+      "heightMetres": 9,
+      "fitFootprint": true,
+      "generator": "runware",
+      "model": "tripo:v3.1@0",
+      "seed": 11062964,
+      "costUsd": 0.5,
+      "prompt": "A long, low two-storey 1980s art deco police station: pale blue and white stucco, horizontal racing-stripe bands, glass-block windows, a flat entrance canopy over wide steps, a parapet with stepped corners. Realistic 3D building, the whole building seen from outside, rectangular footprint, flat roof, main entrance in the middle of the front facade. No ground plane, no people, no vehicles, no trees. No logos, no badges, no text, no license plate lettering. No signs with words."
+    },
+    {
+      "id": "bld_nightclub",
+      "file": "/generated/models/bld_nightclub.glb",
+      "kind": "building",
+      "heightMetres": 8,
+      "fitFootprint": true,
+      "generator": "runware",
+      "model": "tripo:v3.1@0",
+      "seed": 17934701,
+      "costUsd": 0.5,
+      "prompt": "A two-storey 1980s art deco nightclub: magenta and white stucco, a curved corner, porthole windows, a tall vertical fin above the entrance, neon tube outlines along the roof edge, double doors under a chrome canopy. Realistic 3D building, the whole building seen from outside, rectangular footprint, flat roof, main entrance in the middle of the front facade. No ground plane, no people, no vehicles, no trees. No logos, no badges, no text, no license plate lettering. No signs with words."
+    },
+    {
+      "id": "bld_pawn_shop",
+      "file": "/generated/models/bld_pawn_shop.glb",
+      "kind": "building",
+      "heightMetres": 6,
+      "fitFootprint": true,
+      "generator": "runware",
+      "model": "tripo:v3.1@0",
+      "seed": 2543146,
+      "costUsd": 0.5,
+      "prompt": "A single-storey 1980s beachfront shop: faded tan stucco, a wide storefront with large display windows behind roll-up security shutters, a striped fabric awning, a low parapet. Realistic 3D building, the whole building seen from outside, rectangular footprint, flat roof, main entrance in the middle of the front facade. No ground plane, no people, no vehicles, no trees. No logos, no badges, no text, no license plate lettering. No signs with words."
+    },
+    {
+      "id": "bld_exchange",
+      "file": "/generated/models/bld_exchange.glb",
+      "kind": "building",
+      "heightMetres": 10,
+      "fitFootprint": true,
+      "generator": "runware",
+      "model": "tripo:v3.1@0",
+      "seed": 7599203,
+      "costUsd": 0.5,
+      "prompt": "A three-storey 1980s art deco office building: mint green and cream stucco, fluted pilasters, tall vertical windows with chrome frames, a stepped parapet, a polished stone entrance with brass doors. Realistic 3D building, the whole building seen from outside, rectangular footprint, flat roof, main entrance in the middle of the front facade. No ground plane, no people, no vehicles, no trees. No logos, no badges, no text, no license plate lettering. No signs with words."
+    },
+    {
+      "id": "bld_hotel_3",
+      "file": "/generated/models/bld_hotel_3.glb",
+      "kind": "building",
+      "heightMetres": 11.4,
+      "fitFootprint": true,
+      "generator": "runware",
+      "model": "tripo:v3.1@0",
+      "seed": 10692277,
+      "costUsd": 0.5,
+      "prompt": "A 3-storey 1980s beachfront art deco hotel in the Miami Beach style: pastel pink and white stucco walls, rounded corners, horizontal eyebrow ledges over long rows of windows, a central vertical tower fin rising above the roofline, porthole windows on the corners, a shaded front terrace at ground level. Realistic 3D building, the whole building seen from outside, rectangular footprint, flat roof, main entrance in the middle of the front facade. No ground plane, no people, no vehicles, no trees. No logos, no badges, no text, no license plate lettering. No signs with words."
+    },
+    {
+      "id": "bld_hotel_4",
+      "file": "/generated/models/bld_hotel_4.glb",
+      "kind": "building",
+      "heightMetres": 14.8,
+      "fitFootprint": true,
+      "generator": "runware",
+      "model": "tripo:v3.1@0",
+      "seed": 20085005,
+      "costUsd": 0.5,
+      "prompt": "A 4-storey 1980s beachfront art deco hotel in the Miami Beach style: mint green and white stucco walls, rounded corners, horizontal eyebrow ledges over long rows of windows, a central vertical tower fin rising above the roofline, corner windows wrapping around, a shaded front terrace at ground level. Realistic 3D building, the whole building seen from outside, rectangular footprint, flat roof, main entrance in the middle of the front facade. No ground plane, no people, no vehicles, no trees. No logos, no badges, no text, no license plate lettering. No signs with words."
+    },
+    {
+      "id": "bld_hotel_5",
+      "file": "/generated/models/bld_hotel_5.glb",
+      "kind": "building",
+      "heightMetres": 18.2,
+      "fitFootprint": true,
+      "generator": "runware",
+      "model": "tripo:v3.1@0",
+      "seed": 636678,
+      "costUsd": 0.5,
+      "prompt": "A 5-storey 1980s beachfront art deco hotel in the Miami Beach style: lemon yellow and white stucco walls, rounded corners, horizontal eyebrow ledges over long rows of windows, a central vertical tower fin rising above the roofline, balconies with tubular steel railings, a shaded front terrace at ground level. Realistic 3D building, the whole building seen from outside, rectangular footprint, flat roof, main entrance in the middle of the front facade. No ground plane, no people, no vehicles, no trees. No logos, no badges, no text, no license plate lettering. No signs with words."
+    },
+    {
+      "id": "bld_hotel_5b",
+      "file": "/generated/models/bld_hotel_5b.glb",
+      "kind": "building",
+      "heightMetres": 18.2,
+      "fitFootprint": true,
+      "generator": "runware",
+      "model": "tripo:v3.1@0",
+      "seed": 5604818,
+      "costUsd": 0.5,
+      "prompt": "A 5-storey 1980s beachfront art deco hotel in the Miami Beach style: lavender and white stucco walls, rounded corners, horizontal eyebrow ledges over long rows of windows, a central vertical tower fin rising above the roofline, two symmetrical wings and a stepped central tower, a shaded front terrace at ground level. Realistic 3D building, the whole building seen from outside, rectangular footprint, flat roof, main entrance in the middle of the front facade. No ground plane, no people, no vehicles, no trees. No logos, no badges, no text, no license plate lettering. No signs with words."
+    },
+    {
+      "id": "yacht",
+      "file": "/generated/models/yacht.glb",
+      "kind": "boat",
+      "heightMetres": 4,
+      "generator": "runware",
+      "model": "tripo:v3.1@0",
+      "seed": 1121003,
+      "costUsd": 0.5,
+      "prompt": "A white 1980s motor yacht about twelve metres long: sleek hull, a flybridge, chrome railings, tinted windows, floating level. Realistic game asset, no water. No logos, no badges, no text, no license plate lettering."
+    },
+    {
+      "id": "speedboat",
+      "file": "/generated/models/speedboat.glb",
+      "kind": "boat",
+      "heightMetres": 1.8,
+      "generator": "runware",
+      "model": "tripo:v3.1@0",
+      "seed": 7412938,
+      "costUsd": 0.5,
+      "prompt": "A 1980s offshore powerboat: a long pointed hull, a low open cockpit, glossy hot pink and white paint with racing stripes. Realistic game asset, no water. No logos, no badges, no text, no license plate lettering."
+    },
+    {
+      "id": "lifeguard_tower",
+      "file": "/generated/models/lifeguard_tower.glb",
+      "kind": "prop",
+      "heightMetres": 4.5,
+      "generator": "runware",
+      "model": "tripo:v3.1@0",
+      "seed": 12222555,
+      "costUsd": 0.5,
+      "prompt": "A small beach lifeguard tower on wooden stilts: a pastel pink hut with a slanted roof, a railed deck and a ramp down to the sand, 1980s Miami Beach style. Realistic game asset, no ground. No logos, no badges, no text, no license plate lettering."
+    },
+    {
+      "id": "jogger",
+      "file": "/generated/models/jogger.glb",
+      "kind": "character",
+      "heightMetres": 1.66,
+      "generator": "runware",
+      "model": "meshy:meshy@6",
+      "seed": 116924809,
+      "costUsd": 0.8,
+      "prompt": "Full-body realistic 3D character, a woman out jogging in 1980s style: a bright turquoise leotard over pink leggings, white leg warmers, a terry-cloth headband, white running shoes, a high ponytail. Standing straight in an A-pose, arms slightly away from the body, feet apart, facing forward. Realistic proportions and face, game-ready. No logos, no badges, no text, no license plate lettering."
+    },
+    {
+      "id": "skater",
+      "file": "/generated/models/skater.glb",
+      "kind": "character",
+      "heightMetres": 1.76,
+      "generator": "runware",
+      "model": "meshy:meshy@6",
+      "seed": 546490367,
+      "costUsd": 0.8,
+      "prompt": "Full-body realistic 3D character, a young man in 1980s beach style: a cropped tank top, short neon yellow shorts, knee pads, white tube socks, roller skates, a headband, curly hair. Standing straight in an A-pose, arms slightly away from the body, feet apart, facing forward. Realistic proportions and face, game-ready. No logos, no badges, no text, no license plate lettering."
+    },
+    {
+      "id": "beachgoer",
+      "file": "/generated/models/beachgoer.glb",
+      "kind": "character",
+      "heightMetres": 1.65,
+      "generator": "runware",
+      "model": "meshy:meshy@6",
+      "seed": 1116538271,
+      "costUsd": 0.8,
+      "prompt": "Full-body realistic 3D character, a woman heading to the beach in 1980s style: a flowing white cover-up over a coral swimsuit, a wide straw sun hat, sandals, big round sunglasses. Standing straight in an A-pose, arms slightly away from the body, feet apart, facing forward. Realistic proportions and face, game-ready. No logos, no badges, no text, no license plate lettering."
+    },
+    {
+      "id": "retiree",
+      "file": "/generated/models/retiree.glb",
+      "kind": "character",
+      "heightMetres": 1.72,
+      "generator": "runware",
+      "model": "meshy:meshy@6",
+      "seed": 1776151200,
+      "costUsd": 0.8,
+      "prompt": "Full-body realistic 3D character, a retired man in his seventies on a seaside stroll: a white short-sleeved shirt with pleats, beige slacks, a flat cap, white loafers, grey hair and a moustache. Standing straight in an A-pose, arms slightly away from the body, feet apart, facing forward. Realistic proportions and face, game-ready. No logos, no badges, no text, no license plate lettering."
+    },
+    {
+      "id": "dog",
+      "file": "/generated/models/dog.glb",
+      "kind": "animal",
+      "heightMetres": 0.62,
+      "generator": "runware",
+      "model": "tripo:v3.1@0",
+      "seed": 9903234,
+      "costUsd": 0.5,
+      "prompt": "A friendly medium-sized dog with a golden coat standing on all four legs, tail up, head forward, side profile pose. Realistic game asset, no ground, no collar tag text. No logos, no badges, no text, no license plate lettering."
     },
     {
       "id": "palm",

@@ -6,14 +6,14 @@ import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
-import { GENERATED_MODELS, type GeneratedModelEntry, type GeneratedModelManifest } from "@neon-bay/shared";
+import { GENERATED_MODELS, type GeneratedModelEntry, type GeneratedModelManifest, type GeneratedModelSpec } from "@neon-bay/shared";
 import { createModelGenerator } from "./index.js";
 
 const root = fileURLToPath(new URL("../../../", import.meta.url));
 if (existsSync(`${root}.env`)) process.loadEnvFile(`${root}.env`);
 const { values } = parseArgs({
   args: process.argv.slice(2).filter((a) => a !== "--"),
-  options: { force: { type: "boolean", default: false }, only: { type: "string" } },
+  options: { force: { type: "boolean", default: false }, reoptimise: { type: "boolean", default: false }, only: { type: "string" } },
 });
 
 const outDir = `${root}apps/client/public/generated/models`;
@@ -23,8 +23,19 @@ mkdirSync(rawDir, { recursive: true });
 const gltfTransform = fileURLToPath(new URL("../node_modules/.bin/gltf-transform", import.meta.url));
 
 /** 1024 px WebP textures and meshopt geometry: about 30x smaller, same look in game. */
-function optimise(src: string, dest: string): void {
-  execFileSync(gltfTransform, ["optimize", src, dest, "--texture-size", "1024", "--texture-compress", "webp", "--compress", "meshopt", "--simplify", "false"], { stdio: "ignore" });
+/**
+ * People are small on screen and Meshy ignores the face limit (about 200k triangles back), so
+ * they get 512 px textures and are simplified to roughly 8% of their vertices. Everything else
+ * keeps full geometry and 1024 px textures.
+ */
+function optimiseArgs(kind: GeneratedModelSpec["kind"]): string[] {
+  return kind === "character"
+    ? ["--texture-size", "512", "--simplify", "true", "--simplify-ratio", "0.08", "--simplify-error", "0.002"]
+    : ["--texture-size", "1024", "--simplify", "false"];
+}
+
+function optimise(src: string, dest: string, kind: GeneratedModelSpec["kind"]): void {
+  execFileSync(gltfTransform, ["optimize", src, dest, ...optimiseArgs(kind), "--texture-compress", "webp", "--compress", "meshopt"], { stdio: "ignore" });
 }
 const manifestPath = `${outDir}/manifest.json`;
 const previous: GeneratedModelManifest = existsSync(manifestPath) ? JSON.parse(readFileSync(manifestPath, "utf8")) : { generatedAt: "", models: [] };
@@ -35,19 +46,27 @@ const only = values.only?.split(",");
 const jobs = GENERATED_MODELS.filter((s) => !only || only.includes(s.id)).map(async (spec) => {
   const file = `${outDir}/${spec.id}.glb`;
   const prior = byId.get(spec.id);
-  if (!values.force && existsSync(file) && prior && prior.prompt === spec.prompt) return void console.log(`keep ${spec.id}`);
+  const raw = `${rawDir}/${spec.id}.glb`;
+  if (!values.force && existsSync(file) && prior && prior.prompt === spec.prompt) {
+    // --reoptimise rebuilds the shipped file from the saved raw download (no new generation).
+    if (values.reoptimise && existsSync(raw)) {
+      optimise(raw, file, spec.kind);
+      return void console.log(`reoptimised ${spec.id}`);
+    }
+    return void console.log(`keep ${spec.id}`);
+  }
   console.log(`generating ${spec.id} (${spec.engine})…`);
   const out = await gen.generate({ engine: spec.engine, prompt: spec.prompt, faces: spec.faces, ...(spec.aPose ? { aPose: true } : {}) });
   if (!out.bytes) return void console.log(`skip ${spec.id} (${gen.name} produced no file)`);
-  const raw = `${rawDir}/${spec.id}.glb`;
   writeFileSync(raw, out.bytes);
-  optimise(raw, file);
+  optimise(raw, file, spec.kind);
   const entry: GeneratedModelEntry = {
     id: spec.id,
     file: `/generated/models/${spec.id}.glb`,
     kind: spec.kind,
     heightMetres: spec.heightMetres,
     ...(spec.paint ? { paint: spec.paint } : {}),
+    ...(spec.fitFootprint ? { fitFootprint: true } : {}),
     generator: gen.name,
     model: out.model,
     seed: out.seed,

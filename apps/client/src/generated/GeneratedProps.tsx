@@ -2,6 +2,7 @@
 import { Clone, useGLTF } from "@react-three/drei";
 import type { GeneratedModelEntry } from "@neon-bay/shared";
 import { CROSS_STREET_WIDTH, CROSS_STREET_Z, HOTEL_PLOTS, WORLD_BOUNDS } from "@neon-bay/shared";
+import { useFrame } from "@react-three/fiber";
 import { useLayoutEffect, useMemo, useRef } from "react";
 import { Box3, Color, Matrix4, MeshStandardMaterial, Object3D, Vector3, type BufferGeometry, type InstancedMesh, type Material, type Mesh } from "three";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
@@ -148,6 +149,118 @@ export function GeneratedPalms({ entry, count, at }: { entry: GeneratedModelEntr
           frustumCulled={false}
         />
       ))}
+    </group>
+  );
+}
+
+// ---------------------------------------------------------------------------------------------
+// Buildings, boats and beach props.
+
+/** Tripo models face +x out of the box (seen on the cars); this turns that front to +z. */
+export const TRIPO_FRONT_TO_Z = -Math.PI / 2;
+
+/** Which generated building stands on a collider box, if any. */
+export function buildingModelId(boxId: string, storeys?: number, index = 0): string | null {
+  if (["police_station", "nightclub", "pawn_shop", "exchange"].includes(boxId)) return `bld_${boxId}`;
+  if (boxId.startsWith("hotel_") && storeys) return storeys >= 5 ? (index % 2 ? "bld_hotel_5b" : "bld_hotel_5") : `bld_hotel_${storeys}`;
+  return null;
+}
+
+/**
+ * A generated building stretched to exactly fill a collider box, its front turned to `facing`
+ * (the street side). Collision is the server's box, so what you see is what you bump into.
+ */
+export function FittedBuilding({ entry, center, size, facing }: { entry: GeneratedModelEntry; center: Vector3; size: Vector3; facing: "-x" | "+x" }) {
+  const gltf = useGLTF(entry.file);
+  const fit = useMemo(() => {
+    const holder = new Object3D();
+    holder.rotation.y = TRIPO_FRONT_TO_Z + (facing === "-x" ? -Math.PI / 2 : Math.PI / 2);
+    holder.add(gltf.scene.clone());
+    holder.updateMatrixWorld(true);
+    const box = new Box3().setFromObject(holder);
+    const s = box.getSize(new Vector3());
+    const c = box.getCenter(new Vector3());
+    const scale = new Vector3(size.x / s.x, size.y / s.y, size.z / s.z);
+    return { rotation: holder.rotation.y, scale, offset: new Vector3(-c.x * scale.x, -box.min.y * scale.y, -c.z * scale.z) };
+  }, [gltf, size, facing]);
+  useMemo(() => {
+    gltf.scene.traverse((o) => {
+      if ((o as Mesh).isMesh) o.castShadow = o.receiveShadow = true;
+    });
+  }, [gltf]);
+  return (
+    <group position={[center.x + fit.offset.x, fit.offset.y, center.z + fit.offset.z]} scale={fit.scale}>
+      <group rotation-y={fit.rotation}>
+        <Clone object={gltf.scene} />
+      </group>
+    </group>
+  );
+}
+
+/** A generated model scaled uniformly so its longest side (or height) matches, on a base point. */
+export function PlacedModel({ entry, x, y, z, length, yaw = 0 }: { entry: GeneratedModelEntry; x: number; y: number; z: number; length?: number; yaw?: number }) {
+  const gltf = useGLTF(entry.file);
+  const fit = useMemo(() => {
+    const holder = new Object3D();
+    holder.add(gltf.scene.clone());
+    holder.updateMatrixWorld(true);
+    const box = new Box3().setFromObject(holder);
+    const s = box.getSize(new Vector3());
+    const c = box.getCenter(new Vector3());
+    const along = s.x > s.z ? Math.PI / 2 : 0; // put the long side on z
+    const k = length ? length / Math.max(s.x, s.z) : entry.heightMetres / s.y;
+    return { k, along, offset: new Vector3(-c.x * k, -box.min.y * k, -c.z * k) };
+  }, [gltf, length, entry.heightMetres]);
+  return (
+    <group position={[x, y, z]} rotation-y={fit.along + yaw}>
+      <group position={fit.offset} scale={fit.k}>
+        <Clone object={gltf.scene} castShadow receiveShadow />
+      </group>
+    </group>
+  );
+}
+
+/** A generated dog that trots when its walker moves: body bob, head nod and a little roll. */
+export function Dog({ entry }: { entry: GeneratedModelEntry }) {
+  const gltf = useGLTF(entry.file);
+  const fit = useMemo(() => {
+    const holder = new Object3D();
+    holder.rotation.y = TRIPO_FRONT_TO_Z;
+    holder.add(gltf.scene.clone());
+    holder.updateMatrixWorld(true);
+    const box = new Box3().setFromObject(holder);
+    const s = box.getSize(new Vector3());
+    const c = box.getCenter(new Vector3());
+    const k = entry.heightMetres / s.y;
+    return { k, offset: new Vector3(-c.x * k, -box.min.y * k, -c.z * k) };
+  }, [gltf, entry.heightMetres]);
+  const body = useRef<Object3D>(null);
+  const st = useRef({ last: new Vector3(), now: new Vector3(), init: false, phase: Math.random() * 6, speed: 0 });
+  useFrame((_, dt) => {
+    const b = body.current;
+    if (!b || dt <= 0) return;
+    const s = st.current;
+    b.getWorldPosition(s.now);
+    if (!s.init) {
+      s.last.copy(s.now);
+      s.init = true;
+    }
+    const v = Math.hypot(s.now.x - s.last.x, s.now.z - s.last.z) / dt;
+    s.last.copy(s.now);
+    s.speed += (Math.min(v, 6) - s.speed) * Math.min(1, dt * 8);
+    const amt = Math.min(s.speed / 1.5, 1);
+    s.phase += dt * (6 + s.speed * 3) * (amt > 0.05 ? 1 : 0.2);
+    b.position.y = Math.abs(Math.sin(s.phase)) * 0.05 * amt;
+    b.rotation.x = Math.sin(s.phase * 2) * 0.05 * amt;
+    b.rotation.z = Math.sin(s.phase) * 0.04 * amt;
+  });
+  return (
+    <group ref={body}>
+      <group position={fit.offset} scale={fit.k}>
+        <group rotation-y={TRIPO_FRONT_TO_Z}>
+          <Clone object={gltf.scene} castShadow />
+        </group>
+      </group>
     </group>
   );
 }
