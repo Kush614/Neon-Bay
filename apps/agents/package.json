@@ -10,10 +10,11 @@
     "sim": "tsx src/sim.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^1.13.0",
     "@colyseus/sdk": "^0.18.10",
+    "@neon-bay/server": "workspace:*",
     "@neon-bay/shared": "workspace:*",
-    "zod": "^4.6.7",
-    "@neon-bay/server": "workspace:*"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "tsx": "^4.23.15"

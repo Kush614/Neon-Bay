@@ -1,5 +1,6 @@
 import type { PersonaDef } from "../personas/types.js";
 import { mulberry32 } from "../runtime/rng.js";
+import { AnthropicLlmClient } from "./AnthropicLlmClient.js";
 import type { LlmClient } from "./LlmClient.js";
 import { StubLlmClient } from "./StubLlmClient.js";
 
@@ -13,13 +14,21 @@ export function personaStub(persona: PersonaDef, seed = 1): StubLlmClient {
   return new StubLlmClient([({ observation }) => persona.stub(JSON.parse(observation.split("\n\n")[0]!), ctx)]);
 }
 
-/** Select the model provider from LLM_PROVIDER. Defaults to the stub so the game runs offline. */
+/**
+ * Select the model provider from LLM_PROVIDER:
+ * - "stub" (default): deterministic persona policies, no network, used by every test.
+ * - "anthropic": Claude via the Anthropic SDK. LLM_MODEL overrides the model, LLM_EFFORT the effort.
+ */
 export function createLlmClient(persona: PersonaDef, env: NodeJS.ProcessEnv = process.env, opts: { seed?: number } = {}): LlmClient {
   const provider = (env.LLM_PROVIDER ?? "stub").toLowerCase();
   switch (provider) {
     case "stub":
       return personaStub(persona, opts.seed);
+    case "anthropic": {
+      const effort = env.LLM_EFFORT as "low" | "medium" | "high" | undefined;
+      return new AnthropicLlmClient({ model: env.LLM_MODEL || undefined, effort: effort || undefined });
+    }
     default:
-      throw new Error(`Unknown LLM_PROVIDER "${provider}". Supported: stub`);
+      throw new Error(`Unknown LLM_PROVIDER "${provider}". Supported: stub, anthropic`);
   }
 }
