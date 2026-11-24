@@ -18,7 +18,9 @@
     "ledger:export": "pnpm --filter @neon-bay/server ledger:export",
     "sim": "pnpm --filter @neon-bay/agents sim",
     "capture": "pnpm --filter @neon-bay/capture capture",
-    "assets": "pnpm --filter @neon-bay/integrations assets"
+    "assets": "pnpm --filter @neon-bay/integrations assets",
+    "ledger:push": "pnpm --filter @neon-bay/integrations ledger:push",
+    "bruin:run": "bruin run pipelines/neon-bay-ledger"
   },
   "devDependencies": {
     "@colyseus/better-call": "^1.3.4",

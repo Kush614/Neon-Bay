@@ -2,6 +2,8 @@ import { BandCrewChannel } from "./band/BandCrewChannel.js";
 import { StubCrewChannel, type CrewChannel } from "./crewChannel.js";
 import { StubImageGenerator, type ImageGenerator } from "./imageGenerator.js";
 import { StubNewsFeed, type NewsFeed } from "./newsFeed.js";
+import { BruinLedgerSink, BruinReportSource } from "./bruin/warehouse.js";
+import { StubLedgerSink, StubReportSource, type LedgerSink, type ReportSource } from "./ledgerSink.js";
 import { TelemNewsFeed } from "./telem/TelemNewsFeed.js";
 import { RunwareImageGenerator } from "./runware/RunwareImageGenerator.js";
 
@@ -42,4 +44,30 @@ export function createNewsFeed(env: Record<string, string | undefined> = process
     (log ?? console.warn)("[news] NEWS_FEED=telem but TELEM_API_KEY is not set; using the stub");
   }
   return new StubNewsFeed();
+}
+
+export { REPORT_TABLES, StubLedgerSink, StubReportSource, type LedgerSink, type ReportSource, type ReportTable } from "./ledgerSink.js";
+export { BruinLedgerSink, BruinReportSource, flatten, RAW_LEDGER_DDL } from "./bruin/warehouse.js";
+
+/**
+ * LEDGER_SINK=bruin writes to the Bruin pipeline's warehouse: BRUIN_WAREHOUSE (default
+ * "data/warehouse.duckdb" under the repo root; "md:neon_bay" for MotherDuck, which also needs
+ * MOTHERDUCK_TOKEN). Anything else gives the stub.
+ */
+export function warehousePath(env: Record<string, string | undefined>, repoRoot: string): string {
+  const w = env.BRUIN_WAREHOUSE || "data/warehouse.duckdb";
+  return w.startsWith("md:") || w.startsWith("/") ? w : `${repoRoot.replace(/\/$/, "")}/${w}`;
+}
+
+export function createLedgerSink(env: Record<string, string | undefined>, repoRoot: string, log?: (line: string) => void): LedgerSink {
+  if (env.LEDGER_SINK === "bruin") {
+    const path = warehousePath(env, repoRoot);
+    if (!path.startsWith("md:") || env.MOTHERDUCK_TOKEN) return new BruinLedgerSink(path);
+    (log ?? console.warn)("[ledger-sink] BRUIN_WAREHOUSE is MotherDuck but MOTHERDUCK_TOKEN is not set; using the stub");
+  }
+  return new StubLedgerSink();
+}
+
+export function createReportSource(env: Record<string, string | undefined>, repoRoot: string): ReportSource {
+  return env.LEDGER_SINK === "bruin" ? new BruinReportSource(warehousePath(env, repoRoot)) : new StubReportSource();
 }

@@ -8,9 +8,11 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit -p .",
-    "assets": "tsx src/assets.ts"
+    "assets": "tsx src/assets.ts",
+    "ledger:push": "tsx src/ledgerPush.ts"
   },
   "dependencies": {
+    "@duckdb/node-api": "1.5.2-r.2",
     "@neon-bay/shared": "workspace:*"
   },
   "devDependencies": {

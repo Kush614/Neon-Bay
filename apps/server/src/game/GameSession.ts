@@ -26,7 +26,7 @@ import {
   RADIO_STATION,
 } from "@neon-bay/shared";
 import type { Rapier } from "@neon-bay/shared/physics";
-import { StubCrewChannel, StubNewsFeed, type CrewChannel, type CrewMessage, type Headline, type NewsFeed } from "@neon-bay/integrations";
+import { StubCrewChannel, StubLedgerSink, StubNewsFeed, type CrewChannel, type CrewMessage, type Headline, type LedgerSink, type NewsFeed } from "@neon-bay/integrations";
 import type { LedgerWriter } from "../ledger/LedgerWriter.js";
 import { settleDeals } from "../rules/deals.js";
 import { exchangeTick, stakeValue, totalCleanCash } from "../rules/exchange.js";
@@ -72,6 +72,8 @@ export interface GameSessionOptions {
   crewChannel?: CrewChannel;
   /** Radio headlines (Telem, or the stub). Defaults to the stub. */
   newsFeed?: NewsFeed;
+  /** Bruin warehouse the session's ledger is pushed to when it ends. Defaults to the stub. */
+  ledgerSink?: LedgerSink;
 }
 
 const NO_META: ActionMeta = { reason: "", trustChanges: {}, harness: null, latencyMs: null, citesPastSession: false };
@@ -90,6 +92,11 @@ export class GameSession {
   private chaseTimer = 0;
   readonly crewChannel: CrewChannel;
   readonly newsFeed: NewsFeed;
+  readonly ledgerSink: LedgerSink;
+  /** Every ledger entry of this session, for the push at the end. */
+  private readonly entries: LedgerEntry[] = [];
+  /** Settles when the end-of-session ledger push has finished (or failed); null until then. */
+  ledgerPushed: Promise<void> | null = null;
   private headlines: Headline[] = [];
   /** Settles once radio headlines have loaded or failed. The headless sim waits on it; the live server does not. */
   readonly newsReady: Promise<void>;
@@ -107,6 +114,7 @@ export class GameSession {
     this.state = createGameState(opts.sessionId, VAULT_BAGS, opts.exploitEnabled ?? exploitEnabledFromEnv());
     this.crewChannel = opts.crewChannel ?? new StubCrewChannel();
     this.newsFeed = opts.newsFeed ?? new StubNewsFeed();
+    this.ledgerSink = opts.ledgerSink ?? new StubLedgerSink();
     // Headlines load in the background; the radio stays quiet until they arrive, or for good on failure.
     this.newsReady = this.newsFeed.headlines(opts.sessionId).then(
       (h) => {
@@ -270,6 +278,7 @@ export class GameSession {
       citesPastSession: meta.citesPastSession,
     };
     try {
+      this.entries.push(entry);
       this.out.broadcast(MSG.ledger, [this.ledger.write(entry)]);
     } catch (e) {
       console.error("[ledger] failed to write row:", e);
@@ -463,6 +472,14 @@ export class GameSession {
       this.world({ type: "deals_settled", count: settled.length });
     }
     if (phase === "ended") {
+      // Ship the whole session to the Bruin warehouse; never blocks or breaks the game.
+      const sink = this.ledgerSink;
+      this.ledgerPushed = sink.writeSession(s.sessionId, [...this.entries]).then(
+        (n) => {
+          if (sink.name !== "stub") console.log(`[ledger-sink:${sink.name}] pushed ${n} rows for ${s.sessionId}`);
+        },
+        (e: unknown) => console.warn(`[ledger-sink:${sink.name}] push failed: ${e instanceof Error ? e.message : String(e)}`),
+      );
       // Unbanked bags are lost when the session ends.
       for (const p of s.players.values()) {
         if (p.carryingBag) {

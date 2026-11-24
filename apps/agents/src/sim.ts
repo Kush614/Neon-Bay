@@ -2,7 +2,7 @@
 import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
-import { createCrewChannel, createNewsFeed } from "@neon-bay/integrations";
+import { createCrewChannel, createLedgerSink, createNewsFeed } from "@neon-bay/integrations";
 import { runSim } from "./sim/runSim.js";
 
 const envFile = fileURLToPath(new URL("../../../.env", import.meta.url));
@@ -20,10 +20,13 @@ if (!Number.isInteger(seed)) {
 
 const crewChannel = createCrewChannel(process.env, values.verbose ? (l) => console.log(l) : undefined);
 const newsFeed = createNewsFeed(process.env);
-const r = await runSim({ seed, log: values.verbose ? (l) => console.log(l) : undefined, crewChannel, newsFeed });
+const ledgerSink = createLedgerSink(process.env, fileURLToPath(new URL("../../../", import.meta.url)), (l) => console.warn(l));
+const r = await runSim({ seed, log: values.verbose ? (l) => console.log(l) : undefined, crewChannel, newsFeed, ledgerSink });
 await crewChannel.close();
 if (crewChannel.name !== "stub") console.log(`crew channel: ${crewChannel.name}`);
 if (newsFeed.name !== "stub") console.log(`news feed: ${newsFeed.name}`);
+if (ledgerSink.name !== "stub") console.log(`ledger pushed to the Bruin warehouse (${(ledgerSink as { path?: string }).path ?? ""})`);
+await ledgerSink.close();
 const money = (n: number) => n.toLocaleString("en-US");
 console.log(`\nNeon Bay '86 headless sim, seed ${seed}`);
 console.log(`session ${r.sessionId}: ${r.completed ? "completed" : "DID NOT COMPLETE"} (${r.phases.join(" > ")})`);

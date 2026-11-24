@@ -7,7 +7,7 @@ import type { LlmClient } from "../llm/LlmClient.js";
 import { PERSONAS, type PersonaDef } from "../personas/index.js";
 import { AgentRunner } from "../runtime/AgentRunner.js";
 import { VirtualClock } from "../runtime/clock.js";
-import type { CrewChannel, NewsFeed } from "@neon-bay/integrations";
+import type { CrewChannel, LedgerSink, NewsFeed } from "@neon-bay/integrations";
 import { LocalHub } from "./LocalHub.js";
 
 export interface SimOptions {
@@ -23,6 +23,8 @@ export interface SimOptions {
   crewChannel?: CrewChannel;
   /** Radio headlines (Telem or stub); the stub by default. */
   newsFeed?: NewsFeed;
+  /** Bruin warehouse sink; the stub by default. */
+  ledgerSink?: LedgerSink;
 }
 
 export interface SimResult {
@@ -52,6 +54,7 @@ export async function runSim(opts: SimOptions): Promise<SimResult> {
     phases: opts.phases,
     ...(opts.crewChannel ? { crewChannel: opts.crewChannel } : {}),
     ...(opts.newsFeed ? { newsFeed: opts.newsFeed } : {}),
+    ...(opts.ledgerSink ? { ledgerSink: opts.ledgerSink } : {}),
     output: {
       toPlayer: hub.output.toPlayer,
       broadcast: (type, payload) => {
@@ -107,6 +110,8 @@ export async function runSim(opts: SimOptions): Promise<SimResult> {
     issues: ledger.filter((e) => e.row.issue),
     decisions: runners.reduce((n, r) => n + r.decisions.length, 0),
   };
+  // Let the end-of-session ledger push finish before the session closes.
+  await session.ledgerPushed;
   close();
   return result;
 }

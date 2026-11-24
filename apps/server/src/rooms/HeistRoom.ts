@@ -10,13 +10,16 @@ import {
   TICK_RATE_HZ,
   type RejectedMessage,
 } from "@neon-bay/shared";
-import { createCrewChannel, createNewsFeed } from "@neon-bay/integrations";
+import { fileURLToPath } from "node:url";
+import { createCrewChannel, createLedgerSink, createNewsFeed } from "@neon-bay/integrations";
 import { GameSession } from "../game/GameSession.js";
 import { initRapier, sharedNavGraph } from "../game/shared.js";
 import { LedgerWriter } from "../ledger/LedgerWriter.js";
 import { DEFAULT_PHASE_CONFIG } from "../rules/phases.js";
 import { prices } from "../rules/exchange.js";
 import { BusinessSchema, DroppedBagSchema, HeistStateSchema, PlayerSchema, RoadblockSchema, Vec3Schema, VehicleSchema } from "../schema.js";
+
+const REPO_ROOT = fileURLToPath(new URL("../../../../", import.meta.url));
 
 function sessionIdFor(roomId: string): string {
   const d = new Date();
@@ -67,6 +70,7 @@ export class HeistRoom extends Room<{ state: HeistStateSchema }> {
       phases: { ...DEFAULT_PHASE_CONFIG, minHumans: minHumans() },
       crewChannel: createCrewChannel(process.env),
       newsFeed: createNewsFeed(process.env),
+      ledgerSink: createLedgerSink(process.env, REPO_ROOT),
       output: {
         toPlayer: (id, type, payload) => this.clients.get(id)?.send(type, payload),
         broadcast: (type, payload) => this.broadcast(type, payload),
