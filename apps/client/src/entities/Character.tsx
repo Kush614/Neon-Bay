@@ -3,7 +3,7 @@ import type { Group } from "three";
 import { NameTag } from "./NameTag.js";
 
 /** Grey-box character: capsule body, head and a nose that shows facing. Feet at the group origin. */
-export const Character = forwardRef<Group, { name: string; color: string }>(function Character({ name, color }, ref) {
+export const Character = forwardRef<Group, { name: string; color: string; bag?: boolean }>(function Character({ name, color, bag = false }, ref) {
   return (
     <group ref={ref}>
       <group name="body">
@@ -19,6 +19,12 @@ export const Character = forwardRef<Group, { name: string; color: string }>(func
           <boxGeometry args={[0.1, 0.08, 0.14]} />
           <meshStandardMaterial color="#222" />
         </mesh>
+        {bag && (
+          <mesh position={[0, 1.05, -0.5]} castShadow>
+            <boxGeometry args={[0.6, 0.6, 0.35]} />
+            <meshStandardMaterial color="#3d6b3a" roughness={0.9} />
+          </mesh>
+        )}
       </group>
       <NameTag name={name} color={color} />
     </group>

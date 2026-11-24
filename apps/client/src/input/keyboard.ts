@@ -38,3 +38,23 @@ export function moveAxes(): { forward: number; right: number; run: boolean } {
   const right = (isDown("KeyD") || isDown("ArrowRight") ? 1 : 0) - (isDown("KeyA") || isDown("ArrowLeft") ? 1 : 0);
   return { forward, right, run: isDown("ShiftLeft") || isDown("ShiftRight") };
 }
+
+const pressHandlers = new Map<string, Set<() => void>>();
+window.addEventListener("keydown", (e) => {
+  if (e.repeat || isTyping(e)) return;
+  for (const h of pressHandlers.get(e.code) ?? []) h();
+});
+
+/** Call `cb` once per key press (not on auto-repeat). Returns an unsubscribe function. */
+export function onKeyPress(code: string, cb: () => void): () => void {
+  const set = pressHandlers.get(code) ?? new Set();
+  pressHandlers.set(code, set);
+  set.add(cb);
+  return () => set.delete(cb);
+}
+
+/** W/S and A/D as car controls. */
+export function driveAxes(): { throttle: number; steer: number } {
+  const { forward, right } = moveAxes();
+  return { throttle: forward, steer: right };
+}

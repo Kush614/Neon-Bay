@@ -3,6 +3,7 @@ import type RAPIER_NS from "@dimforge/rapier3d-compat";
 import {
   CAR_ACCEL,
   CAR_BRAKE,
+  CAR_CLEARANCE,
   CAR_DRAG,
   CAR_HALF_EXTENTS,
   CAR_MAX_REVERSE,
@@ -22,7 +23,7 @@ export interface DriveInput {
 }
 
 /** The world is flat, so the car's box rides above the ground like a body on wheels. */
-const CLEARANCE = 0.3;
+const CLEARANCE = CAR_CLEARANCE;
 const ARRIVE_RADIUS = 4;
 const WAYPOINT_RADIUS = 5;
 const STUCK_SECONDS = 4;

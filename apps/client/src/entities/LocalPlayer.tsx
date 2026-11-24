@@ -4,8 +4,8 @@ import { useEffect, useRef } from "react";
 import { Vector3, type Group } from "three";
 import { spawnPoint } from "@neon-bay/shared";
 import { CharacterBody, type MoveInput } from "@neon-bay/shared/physics";
-import { installKeyboard, moveAxes } from "../input/keyboard.js";
-import { connect, localServerState, sendInput, useNetStore } from "../net/connection.js";
+import { driveAxes, installKeyboard, moveAxes } from "../input/keyboard.js";
+import { connect, localServerState, sendInput, useNetStore, vehicleBuffers } from "../net/connection.js";
 import { useLocalStore } from "../store.js";
 import { Character } from "./Character.js";
 
@@ -44,6 +44,8 @@ export function LocalPlayer() {
   const lastReconciled = useRef(0);
   const spawned = useRef(false);
   const currentInput = useRef<MoveInput>({ x: 0, z: 0, run: false });
+  const wasDriving = useRef(false);
+  const lastDrive = useRef<{ throttle: number; steer: number; at: number } | null>(null);
 
   useEffect(() => installKeyboard(), []);
   useEffect(() => {
@@ -88,6 +90,29 @@ export function LocalPlayer() {
   useBeforePhysicsStep(() => {
     const c = body.current;
     if (!c) return;
+    const driving = !!localServerState.player?.vehicleId;
+    if (driving !== wasDriving.current) {
+      wasDriving.current = driving;
+      // In a car the server moves us; our capsule must not block the car's collider.
+      c.collider.setEnabled(!driving);
+      if (!driving && localServerState.player) {
+        c.teleport(localServerState.player.position);
+        history.current.clear();
+      }
+    }
+    if (driving) {
+      if (useNetStore.getState().status !== "connected") return;
+      const { throttle, steer } = driveAxes();
+      const now = performance.now();
+      const prev = lastDrive.current;
+      const changed = !prev || prev.throttle !== throttle || prev.steer !== steer;
+      if (changed || throttle !== 0 || steer !== 0 || now - (prev?.at ?? 0) > IDLE_HEARTBEAT_MS) {
+        seq.current++;
+        sendInput({ seq: seq.current, x: 0, z: 0, run: false, throttle, steer });
+        lastDrive.current = { throttle, steer, at: now };
+      }
+      return;
+    }
     const { forward, right, run } = moveAxes();
     // Camera-relative axes on the ground plane, normalised so diagonals are not faster.
     const fx = -Math.sin(yaw.current);
@@ -133,6 +158,7 @@ export function LocalPlayer() {
     const c = body.current;
     const server = localServerState.player;
     if (!c || !server || localServerState.receivedAt === lastReconciled.current) return;
+    if (server.vehicleId) return; // the car is authoritative; nothing to reconcile
     lastReconciled.current = localServerState.receivedAt;
     const feet = c.feet();
 
@@ -171,6 +197,24 @@ export function LocalPlayer() {
     const m = model.current;
     if (!c || !m) return;
     reconcile();
+    const carId = localServerState.player?.vehicleId;
+    const car = carId ? vehicleBuffers.get(carId)?.sample(performance.now()) : undefined;
+    m.visible = !car;
+    if (car) {
+      // Swing the camera in behind the car.
+      let dy = car.heading + Math.PI - yaw.current;
+      dy = Math.atan2(Math.sin(dy), Math.cos(dy));
+      yaw.current += dy * Math.min(1, dt * 2.5);
+      if (OVERVIEW) {
+        camera.position.set(-60, 260, 260);
+        camera.lookAt(130, 0, 0);
+      } else followCamera({ x: car.x, y: car.y + 0.4, z: car.z }, dt, 9);
+      if (state.clock.elapsedTime - lastStore.current > 0.1) {
+        lastStore.current = state.clock.elapsedTime;
+        useLocalStore.getState().setPosition({ x: car.x, y: car.y, z: car.z }, false);
+      }
+      return;
+    }
     const feet = c.feet();
     m.position.set(feet.x, feet.y, feet.z);
     // Turn smoothly toward the movement heading.
@@ -196,13 +240,13 @@ export function LocalPlayer() {
     }
   });
 
-  function followCamera(feet: { x: number; y: number; z: number }, dt: number) {
+  function followCamera(feet: { x: number; y: number; z: number }, dt: number, distance = CAMERA_DISTANCE) {
     const target = lookAt.current.set(feet.x, feet.y + CAMERA_HEIGHT, feet.z);
     const cp = Math.cos(pitch.current);
     const desired = new Vector3(
-      target.x + Math.sin(yaw.current) * CAMERA_DISTANCE * cp,
-      target.y + Math.sin(pitch.current) * CAMERA_DISTANCE,
-      target.z + Math.cos(yaw.current) * CAMERA_DISTANCE * cp,
+      target.x + Math.sin(yaw.current) * distance * cp,
+      target.y + Math.sin(pitch.current) * distance,
+      target.z + Math.cos(yaw.current) * distance * cp,
     );
     desired.y = Math.max(desired.y, 0.5);
     camera.position.lerp(desired, Math.min(1, dt * 10));
@@ -210,5 +254,6 @@ export function LocalPlayer() {
   }
 
   const name = useNetStore((s) => s.roster.find((r) => r.isLocal)?.name ?? "You");
-  return <Character ref={model} name={name} color="#ff4fa3" />;
+  const bag = useNetStore((s) => s.roster.find((r) => r.isLocal)?.carryingBag ?? false);
+  return <Character ref={model} name={name} color="#ff4fa3" bag={bag} />;
 }

@@ -3,8 +3,10 @@ import { Physics } from "@react-three/rapier";
 import { Suspense } from "react";
 import { LocalPlayer } from "./entities/LocalPlayer.js";
 import { RemotePlayers } from "./entities/RemotePlayers.js";
+import { Vehicles } from "./entities/Vehicles.js";
 import { Lighting } from "./scene/Lighting.js";
 import { World } from "./scene/World.js";
+import { Controls } from "./ui/Controls.js";
 import { HUD } from "./ui/HUD.js";
 import { LedgerPanel } from "./ui/LedgerPanel.js";
 
@@ -19,10 +21,12 @@ export function App() {
             <World />
             <LocalPlayer />
             <RemotePlayers />
+            <Vehicles />
           </Physics>
         </Suspense>
       </Canvas>
       <HUD />
+      <Controls />
       <LedgerPanel />
     </>
   );

@@ -40,3 +40,5 @@ export const CAR_BRAKE = 18;
 export const CAR_DRAG = 2.5;
 export const CAR_STEER_RATE = 1.8; // rad/s at speed
 export const CAR_ENTER_RADIUS = 4;
+/** The car body rides this far above the ground; the collider starts here. */
+export const CAR_CLEARANCE = 0.3;

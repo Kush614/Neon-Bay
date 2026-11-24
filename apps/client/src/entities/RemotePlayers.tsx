@@ -14,7 +14,7 @@ function RemotePlayer({ entry }: { entry: RosterEntry }) {
     const g = ref.current;
     const s = remoteBuffers.get(entry.id)?.sample(performance.now());
     if (!g || !s) return;
-    g.visible = true;
+    g.visible = !entry.inVehicle; // drivers are drawn as their car
     g.position.set(s.x, s.y, s.z);
     g.rotation.y = s.heading;
     // Bob while moving, judged from the interpolated speed.
@@ -27,7 +27,7 @@ function RemotePlayer({ entry }: { entry: RosterEntry }) {
 
   return (
     <group ref={ref} visible={false}>
-      <Character name={entry.name} color={COLORS[entry.kind] ?? "#cccccc"} />
+      <Character name={entry.name} color={COLORS[entry.kind] ?? "#cccccc"} bag={entry.carryingBag} />
     </group>
   );
 }
