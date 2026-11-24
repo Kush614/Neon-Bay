@@ -12,9 +12,13 @@
     "@colyseus/schema": "^5.0.50",
     "@dimforge/rapier3d-compat": "0.19.2",
     "@neon-bay/shared": "workspace:*",
-    "colyseus": "^0.18.12"
+    "colyseus": "^0.18.12",
+    "recast-navigation": "^0.44.0"
   },
   "devDependencies": {
     "tsx": "^4.23.15"
+  },
+  "exports": {
+    "./app": "./src/app.ts"
   }
 }

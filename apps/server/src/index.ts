@@ -1,14 +1,7 @@
-import { defineRoom, defineServer } from "colyseus";
-import { DEFAULT_SERVER_PORT, ROOM_NAME } from "@neon-bay/shared";
-import { HeistRoom } from "./rooms/HeistRoom.js";
+import { DEFAULT_SERVER_PORT } from "@neon-bay/shared";
+import { createGameServer } from "./app.js";
 
 const port = Number(process.env.PORT ?? DEFAULT_SERVER_PORT);
-
-const server = defineServer({
-  rooms: {
-    [ROOM_NAME]: defineRoom(HeistRoom),
-  },
-});
-
+const server = createGameServer();
 await server.listen(port);
 console.log(`[neon-bay] server listening on ws://localhost:${port}`);
