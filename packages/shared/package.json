@@ -12,6 +12,7 @@
     "typecheck": "tsc --noEmit -p ."
   },
   "dependencies": {
-    "@dimforge/rapier3d-compat": "0.19.2"
+    "@dimforge/rapier3d-compat": "0.19.2",
+    "zod": "^4.6.7"
   }
 }

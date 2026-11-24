@@ -94,6 +94,13 @@ export class CharacterBody {
     this.body.setNextKinematicTranslation({ x: p.x + m.x, y: p.y + m.y, z: p.z + m.z });
   }
 
+  /** Move instantly so the feet are at (x, z), keeping the current height. Bypasses collision. */
+  teleport(to: { x: number; z: number }): void {
+    const t = this.body.translation();
+    this.body.setTranslation({ x: to.x, y: t.y, z: to.z }, true);
+    this.body.setNextKinematicTranslation({ x: to.x, y: t.y, z: to.z });
+  }
+
   /** Centre of the capsule. */
   position(): { x: number; y: number; z: number } {
     const t = this.body.translation();

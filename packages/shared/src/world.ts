@@ -359,3 +359,14 @@ export function rectContains(r: Rect, x: number, z: number): boolean {
 export function isOnFloor(x: number, z: number): boolean {
   return rectContains(GROUND, x, z) || rectContains(PIER, x, z);
 }
+
+/**
+ * Spread spawn points in front of a location's entrance so players never spawn inside each other.
+ * Second-street entrances sit in the 8 m road strip, so points stay between x = 1.5 and x = 6.5.
+ */
+export function spawnPoint(location: LocationId, index: number): { x: number; z: number } {
+  const e = LOCATIONS[location].entrance;
+  const col = index % 2;
+  const row = Math.floor(index / 2);
+  return { x: e.x - 1.5 + col * 3, z: e.z + 2 + row * 1.6 };
+}
