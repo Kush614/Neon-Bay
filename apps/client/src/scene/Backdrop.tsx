@@ -7,7 +7,7 @@ import { nightGlow, tod } from "./timeOfDay.js";
 /** Facade material for instanced, scaled boxes: UVs come from world position in the shader. */
 function backdropMaterial(): MeshStandardMaterial {
   const tex = facadeTextures();
-  const m = new MeshStandardMaterial({ map: tex.map, emissiveMap: tex.emissive, emissive: new Color("#ffffff"), roughnessMap: tex.roughness, roughness: 1 });
+  const m = new MeshStandardMaterial({ map: tex.map, emissiveMap: tex.emissive, emissive: new Color("#ffffff"), roughnessMap: tex.roughness, normalMap: tex.normal, roughness: 1 });
   m.onBeforeCompile = (shader) => {
     shader.vertexShader = shader.vertexShader.replace(
       "#include <uv_vertex>",
@@ -18,7 +18,8 @@ function backdropMaterial(): MeshStandardMaterial {
        if (nbN.y > 0.5) nbUv = vec2(0.004, 0.996);
        vMapUv = nbUv;
        vEmissiveMapUv = nbUv;
-       vRoughnessMapUv = nbUv;`,
+       vRoughnessMapUv = nbUv;
+       vNormalMapUv = (normalMapTransform * vec3(nbUv, 1.0)).xy;`,
     );
   };
   return m;

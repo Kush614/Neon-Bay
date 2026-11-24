@@ -225,7 +225,6 @@ function lampSpots(): { x: number; z: number; ry: number }[] {
   const out: { x: number; z: number; ry: number }[] = [];
   for (let z = WORLD_BOUNDS.minZ + 10; z < WORLD_BOUNDS.maxZ; z += 26) {
     if (CROSS_STREET_Z.some((c) => Math.abs(c - z) < CROSS_STREET_WIDTH / 2 + 1)) continue;
-    out.push({ x: SECOND_STREET_ROAD.maxX + 0.4, z, ry: Math.PI }); // arm over Second Street
     out.push({ x: 88.6, z: z + 13, ry: Math.PI }); // avenue, west side
     out.push({ x: 107.4, z, ry: 0 }); // avenue, park side
   }

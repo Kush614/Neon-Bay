@@ -1,7 +1,7 @@
 // Procedural art-deco facades: a canvas texture of window bays, plus an emissive twin whose lit
 // windows glow as night falls. Box UVs are rewritten in metres so every building gets
 // real-size bays regardless of its footprint. Original work; no image assets.
-import { BoxGeometry, CanvasTexture, RepeatWrapping, SRGBColorSpace, type Texture } from "three";
+import { BoxGeometry, CanvasTexture, RepeatWrapping, SRGBColorSpace, TextureLoader, type Texture } from "three";
 
 export const BAY = 3.2; // metres per window bay
 export const STOREY = 3.4; // matches STOREY_HEIGHT
@@ -35,14 +35,19 @@ export interface FacadeTextures {
   map: Texture;
   emissive: Texture;
   roughness: Texture;
+  /** CC0 plaster normal (Poly Haven), repeated every 4 m on its own transform. */
+  normal: Texture;
 }
+
+const PLASTER = "/cc0/textures/plastered_wall_";
 
 let cached: FacadeTextures | null = null;
 
 /** White stucco with blue-glass windows (tinted by the material colour), lit windows and roughness. */
 export function facadeTextures(): FacadeTextures {
   if (cached) return cached;
-  const [base, b] = canvas();
+  const [base, baseCtx] = canvas();
+  const [layer, b] = canvas(); // windows and ledges, transparent elsewhere
   const [glow, g] = canvas();
   const [rough, r] = canvas();
   const rnd = rand(86);
@@ -54,13 +59,6 @@ export function facadeTextures(): FacadeTextures {
     for (let tx = 0; tx < TILES; tx++) {
       const x = tx * PX;
       const y = ty * PX;
-      // Stucco with a faint speckle.
-      b.fillStyle = "#f4f1ea";
-      b.fillRect(x, y, PX, PX);
-      for (let i = 0; i < 40; i++) {
-        b.fillStyle = `rgba(120,110,100,${0.03 + rnd() * 0.04})`;
-        b.fillRect(x + rnd() * PX, y + rnd() * PX, 2, 2);
-      }
       // Art-deco eyebrow ledge under each storey.
       b.fillStyle = "#d9d2c4";
       b.fillRect(x, y + PX - 14, PX, 10);
@@ -93,7 +91,26 @@ export function facadeTextures(): FacadeTextures {
       }
     }
   }
-  cached = { map: texture(base, true), emissive: texture(glow, true), roughness: texture(rough, false) };
+  // Plain stucco until the photo plaster loads, then plaster under the window layer.
+  baseCtx.fillStyle = "#f4f1ea";
+  baseCtx.fillRect(0, 0, PX * TILES, PX * TILES);
+  baseCtx.drawImage(layer, 0, 0);
+  const map = texture(base, true);
+  const img = new Image();
+  img.onload = () => {
+    const metres = 4; // the plaster scan covers about 4 m
+    const px = (metres / BAY) * PX;
+    for (let yy = 0; yy < PX * TILES; yy += px) for (let xx = 0; xx < PX * TILES; xx += px) baseCtx.drawImage(img, xx, yy, px, px);
+    baseCtx.fillStyle = "rgba(255,250,240,0.35)"; // lift it toward painted stucco
+    baseCtx.fillRect(0, 0, PX * TILES, PX * TILES);
+    baseCtx.drawImage(layer, 0, 0);
+    map.needsUpdate = true;
+  };
+  img.src = `${PLASTER}diffuse.jpg`;
+  const normal = new TextureLoader().load(`${PLASTER}nor_gl.jpg`);
+  normal.wrapS = normal.wrapT = RepeatWrapping;
+  normal.repeat.set((BAY * TILES) / 4, (STOREY * TILES) / 4);
+  cached = { map, emissive: texture(glow, true), roughness: texture(rough, false), normal };
   return cached;
 }
 

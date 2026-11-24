@@ -20,7 +20,8 @@
     "capture": "pnpm --filter @neon-bay/capture capture",
     "assets": "pnpm --filter @neon-bay/integrations assets",
     "ledger:push": "pnpm --filter @neon-bay/integrations ledger:push",
-    "bruin:run": "bruin run pipelines/neon-bay-ledger"
+    "bruin:run": "bruin run pipelines/neon-bay-ledger",
+    "fetch:cc0": "node scripts/fetch-cc0.mjs"
   },
   "devDependencies": {
     "@colyseus/better-call": "^1.3.4",

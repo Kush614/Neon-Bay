@@ -27,6 +27,7 @@ export function Buildings({ boxes }: { boxes: StaticBox[] }) {
             emissiveMap: tex.emissive,
             emissive: new Color("#ffffff"),
             roughnessMap: tex.roughness,
+            normalMap: tex.normal,
             color: stucco(b.color),
             roughness: 1,
             metalness: 0.05,

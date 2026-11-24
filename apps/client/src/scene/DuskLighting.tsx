@@ -1,7 +1,7 @@
 // Golden-hour-to-night lighting rig (SPEC.md section 8), driven by timeOfDay.
 // The sun sets in the west, behind Second Street; the shadow camera follows the local player
 // so one 70 m map stays sharp (a stand-in for cascaded shadow maps).
-import { Environment, Lightformer, Sky, Stars } from "@react-three/drei";
+import { Environment, Stars } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
 import { PHASE_SECONDS, type Phase } from "@neon-bay/shared";
 import { useRef } from "react";
@@ -13,7 +13,6 @@ import { nightGlow, ramp, targetTimeOfDay, tod } from "./timeOfDay.js";
 
 const SUN_AZIMUTH = MathUtils.degToRad(250); // west-south-west, over the city
 const sunDir = new Vector3();
-const sky = new Vector3();
 
 export function sunDirection(t: number, out = sunDir): Vector3 {
   const elevation = MathUtils.degToRad(MathUtils.lerp(16, -7, t));
@@ -34,7 +33,6 @@ export function DuskLighting() {
   const sun = useRef<DirectionalLight>(null);
   const moon = useRef<DirectionalLight>(null);
   const hemi = useRef<HemisphereLight>(null);
-  const skyRef = useRef<{ material: { uniforms: Record<string, { value: unknown }> } }>(null);
   const stars = useRef<{ visible: boolean }>(null);
   const scene = useThree((s) => s.scene);
   const fogColor = useRef(new Color());
@@ -62,12 +60,7 @@ export function DuskLighting() {
       hemi.current.groundColor.copy(ramp(t, ["#6b4a3a", "#4a2f4a", "#120f24"]));
       hemi.current.intensity = MathUtils.lerp(1.1, 0.45, t);
     }
-    const u = skyRef.current?.material.uniforms;
-    if (u) {
-      (u.sunPosition!.value as Vector3).copy(sky.copy(d).multiplyScalar(1000));
-      u.rayleigh!.value = MathUtils.lerp(1.2, 3.2, t);
-      u.turbidity!.value = MathUtils.lerp(6, 10, t);
-    }
+    scene.backgroundIntensity = MathUtils.lerp(1, 0.04, MathUtils.smoothstep(t, 0.45, 0.95));
     if (stars.current) stars.current.visible = t > 0.7;
     const fog = scene.fog as Fog | null;
     if (fog) {
@@ -80,7 +73,6 @@ export function DuskLighting() {
 
   return (
     <>
-      <Sky ref={skyRef as never} distance={4500} sunPosition={[-100, 20, -50]} mieCoefficient={0.005} mieDirectionalG={0.86} />
       <Stars ref={stars as never} radius={600} depth={80} count={2500} factor={5} fade speed={0} />
       <hemisphereLight ref={hemi} />
       <directionalLight
@@ -97,13 +89,8 @@ export function DuskLighting() {
         shadow-normalBias={0.04}
       />
       <directionalLight ref={moon} color="#8fa8ff" />
-      {/* Image-based light from a sunset environment built of light panels (no HDRI download). */}
-      <Environment resolution={128} frames={1}>
-        <Lightformer form="rect" intensity={3} color="#ffb070" position={[-60, 12, -20]} scale={[120, 30, 1]} target={[0, 0, 0]} />
-        <Lightformer form="rect" intensity={1.4} color="#ff6fb5" position={[0, 40, 80]} scale={[120, 40, 1]} target={[0, 0, 0]} />
-        <Lightformer form="rect" intensity={1.2} color="#5fd6ff" position={[80, 30, -60]} scale={[100, 40, 1]} target={[0, 0, 0]} />
-        <Lightformer form="ring" intensity={0.6} color="#ffffff" position={[0, 80, 0]} scale={60} target={[0, 0, 0]} />
-      </Environment>
+      {/* CC0 photographed sunset sky (Poly Haven, ASSETS.md): background and image-based light. */}
+      <Environment files="/cc0/hdri/belfast_sunset_puresky_2k.hdr" background backgroundRotation={[0, SUN_AZIMUTH + Math.PI / 2, 0]} environmentRotation={[0, SUN_AZIMUTH + Math.PI / 2, 0]} />
       <fog attach="fog" args={["#f2b38c", 90, 520]} />
     </>
   );
