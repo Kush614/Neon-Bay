@@ -11,6 +11,7 @@ pnpm e2e               # two-browser smoke test (starts both servers if needed)
 pnpm ledger:export -- --session <id>   # no --session lists recorded sessions
 pnpm sim -- --seed 1   # full headless session (stubbed models unless LLM_PROVIDER says otherwise); -v for a trace
 MIN_HUMANS=1 pnpm dev:server           # let one human start the heist while testing alone (the spec's default is 2)
+pnpm capture -- --frames 200 --seed 1  # synthetic labelled dataset (see below); writes data/captures/<run>/
 ```
 
 ## Status
@@ -23,6 +24,21 @@ MIN_HUMANS=1 pnpm dev:server           # let one human start the heist while tes
 | M4 Ledger | done |
 | M5 Full crew and rules | done |
 | M6–M10 | not started |
+
+## Synthetic capture demo (outside the spec)
+
+An opt-in extra, not one of the SPEC milestones. It borrows the method of *Driving in the Matrix* (Johnson-Roberson et al., ICRA 2017, arXiv:1610.01983): a game engine knows what it drew, so it can label its own frames.
+
+`pnpm capture` starts the server with the stubbed agent crew playing a live heist, opens the client headless at `?capture=1`, and renders N frames. For each frame the client picks one of six lighting and fog presets (golden hour, noon, dusk, night, overcast, sea fog) and a street, dashcam or elevated camera. It then renders an instance-ID pass, where every car and pedestrian is drawn in a flat ID colour, and reads it back to get:
+
+- pixel-exact instance masks and tight 2D boxes from the visible pixels;
+- occlusion: visible pixels divided by the pixels the object covers when rendered alone;
+- truncation: how much of the projected 3D box falls outside the image;
+- KITTI 3D fields: dimensions, location in camera coordinates, `rotation_y` and `alpha`.
+
+The output is `image_2/` + `label_2/` (KITTI object format), `mask/`, `coco.json`, `stats.json` and a self-contained `index.html` viewer. The viewer shows box overlays, a mask toggle, a box-centre heatmap and a labels-per-image histogram, mirroring the paper's figures 5 and 6. Seeded client-only ambient cars and pedestrians add variety; the server never sees them. Objects under 30 visible pixels or 10 px tall are not labelled.
+
+It runs at about 1.5 frames/s on a CPU (SwiftShader). It makes no realism claim: this is grey-box geometry, so the point is the pipeline, not a training set that transfers to real roads.
 
 ## Decisions the spec left open
 

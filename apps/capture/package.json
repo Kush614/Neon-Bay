@@ -1,0 +1,16 @@
+{
+  "name": "@neon-bay/capture",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "capture": "tsx src/capture.ts",
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "devDependencies": {
+    "tsx": "^4.23.15"
+  },
+  "dependencies": {
+    "@neon-bay/shared": "workspace:*"
+  }
+}
