@@ -1,14 +1,13 @@
 // Photo-scanned CC0 street furniture from Poly Haven (ASSETS.md): cast-iron lamps along Second
-// Street and bins by the doors. Models are normalised to real heights at load time.
+// Street. (The bins by the doors are physical now: physics/DynamicProps.tsx.) Models are normalised to real heights at load time.
 // Triangle budget: ~13 lamps x 30k + 8 bins x 14k, under the 1.5M scene budget.
 import { Clone, useGLTF } from "@react-three/drei";
-import { CROSS_STREET_WIDTH, CROSS_STREET_Z, LOCATIONS, SECOND_STREET_ROAD, WORLD_BOUNDS } from "@neon-bay/shared";
+import { CROSS_STREET_WIDTH, CROSS_STREET_Z, SECOND_STREET_ROAD, WORLD_BOUNDS } from "@neon-bay/shared";
 import { useMemo } from "react";
 import { Box3, Vector3, type Mesh, type Object3D } from "three";
 import { NEON } from "./Props.js";
 
 const LAMP = "/cc0/models/street_lamp_01/street_lamp_01.gltf";
-const BIN = "/cc0/models/metal_trash_can/metal_trash_can.gltf";
 
 /** Scale so the model is `height` metres tall with its base at y=0, centred on x/z. */
 function normalise(scene: Object3D, height: number): { scale: number; offset: Vector3; size: Vector3 } {
@@ -36,18 +35,8 @@ export function lampSpotsSecondStreet(): number[] {
 
 export function StreetFurniture() {
   const lamp = useGLTF(LAMP);
-  const bin = useGLTF(BIN);
   const lampFit = useMemo(() => normalise(lamp.scene, 5.5), [lamp]);
-  const binFit = useMemo(() => normalise(bin.scene, 1.05), [bin]);
   const lampZ = useMemo(lampSpotsSecondStreet, []);
-  const bins = useMemo(
-    () =>
-      (["bank", "nightclub", "pawn_shop", "exchange", "police_station"] as const).flatMap((id) => {
-        const e = LOCATIONS[id].entrance;
-        return [{ x: e.x - 1.2, z: e.z + 5 }];
-      }),
-    [],
-  );
   const x = SECOND_STREET_ROAD.maxX + 0.8;
   return (
     <group>
@@ -60,14 +49,8 @@ export function StreetFurniture() {
           </mesh>
         </group>
       ))}
-      {bins.map((b, i) => (
-        <group key={i} position={[b.x, 0, b.z]} rotation-y={i * 1.3}>
-          <Clone object={bin.scene} scale={binFit.scale} position={binFit.offset} />
-        </group>
-      ))}
     </group>
   );
 }
 
 useGLTF.preload(LAMP);
-useGLTF.preload(BIN);

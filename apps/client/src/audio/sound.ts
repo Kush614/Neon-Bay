@@ -60,6 +60,25 @@ function burst(dur: number, vol: number, filter: BiquadFilterType, freq: number,
 // One-shot effects.
 
 export const sfx = {
+  /** Something knocked over: a dull thump, louder for harder hits. `vol` 0..1 (distance-scaled by caller). */
+  thud(vol: number, metal = false) {
+    if (vol < 0.03) return;
+    burst(0.12, 0.35 * vol, "lowpass", metal ? 1400 : 500, 0, 1);
+    tone(metal ? 210 + Math.random() * 60 : 70 + Math.random() * 20, metal ? 0.25 : 0.12, metal ? "triangle" : "sine", 0.3 * vol);
+  },
+  /** An 80s car horn: two detuned square waves. */
+  horn(vol: number) {
+    if (vol < 0.03) return;
+    tone(392, 0.32, "square", 0.07 * vol);
+    tone(466, 0.32, "square", 0.06 * vol);
+  },
+  /** A short dog bark. */
+  bark(vol: number) {
+    if (vol < 0.03) return;
+    burst(0.07, 0.22 * vol, "bandpass", 900, 0, 2);
+    tone(330, 0.06, "sawtooth", 0.12 * vol);
+    tone(260, 0.07, "sawtooth", 0.1 * vol, 0.06);
+  },
   footstep(run: boolean) {
     burst(0.07, run ? 0.22 : 0.14, "bandpass", 900 + Math.random() * 400, 0, 1.2);
     tone(90 + Math.random() * 20, 0.06, "sine", run ? 0.18 : 0.1);

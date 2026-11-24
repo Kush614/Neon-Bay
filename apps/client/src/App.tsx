@@ -9,6 +9,7 @@ import { DuskLighting, TimeOfDayDriver } from "./scene/DuskLighting.js";
 import { Effects } from "./scene/Effects.js";
 import { NeonDriver } from "./scene/Props.js";
 import { QUALITY } from "./scene/quality.js";
+import { DynamicProps } from "./physics/DynamicProps.js";
 
 const NPCS = new URLSearchParams(location.search).get("npcs") !== "0";
 import { World } from "./scene/World.js";
@@ -32,8 +33,9 @@ export function App() {
         gl={{ antialias: !QUALITY.postprocessing || CAPTURE, preserveDrawingBuffer: CAPTURE, powerPreference: "high-performance" }}
       >
         <Suspense fallback={null}>
-          {/* Gravity is applied by the character controller, not the world. */}
-          <Physics timeStep={1 / 60} gravity={[0, 0, 0]} interpolate={false}>
+          {/* Characters and cars are kinematic (their controllers apply gravity); world gravity
+              only moves the client-only dynamic props. */}
+          <Physics timeStep={1 / 60} gravity={[0, -9.81, 0]} interpolate={false}>
             {CAPTURE ? <Lighting /> : <DuskLighting />}
             <TimeOfDayDriver />
             <NeonDriver />
@@ -42,6 +44,7 @@ export function App() {
             <LocalPlayer />
             <RemotePlayers />
             <Vehicles />
+            <DynamicProps />
             {CAPTURE ? <AmbientTraffic /> : NPCS && <AmbientTraffic game />}
             {CAPTURE && <CaptureRig />}
           </Physics>

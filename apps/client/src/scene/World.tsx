@@ -1,6 +1,8 @@
 import { Html } from "@react-three/drei";
+import { useFrame } from "@react-three/fiber";
+import type { Group } from "three";
 import { useRapier } from "@react-three/rapier";
-import { Suspense, useEffect, useMemo } from "react";
+import { Suspense, useEffect, useMemo, useRef } from "react";
 import { useGeneratedModels } from "../generated/manifest.js";
 import { PlacedModel } from "../generated/GeneratedProps.js";
 import {
@@ -42,6 +44,29 @@ function FlatRect({ r, y, surface }: { r: Rect; y: number; surface: Surface }) {
   );
 }
 
+/**
+ * Buoyancy on the ocean swell: heave, pitch and roll from the sum of two slow waves sampled at
+ * the bow, stern and beam. Longer hulls average more of the wave, so big boats move less.
+ */
+function Floating({ seed, size, children }: { seed: number; size: number; children: React.ReactNode }) {
+  const g = useRef<Group>(null);
+  useFrame(({ clock }) => {
+    const o = g.current;
+    if (!o) return;
+    const t = clock.elapsedTime;
+    const wave = (u: number, v: number) => 0.22 * Math.sin(u * 0.35 + t * 1.1 + seed) + 0.12 * Math.sin(v * 0.5 - t * 1.7 + seed * 2);
+    const half = size / 2;
+    const bow = wave(0, half);
+    const stern = wave(0, -half);
+    const port = wave(-half * 0.3, 0);
+    const starboard = wave(half * 0.3, 0);
+    o.position.y = WATER_Y - 0.25 + (bow + stern + port + starboard) / 4;
+    o.rotation.x = Math.atan2(stern - bow, size) * 1.5;
+    o.rotation.z = Math.atan2(port - starboard, size * 0.3) * 0.6;
+  });
+  return <group ref={g}>{children}</group>;
+}
+
 /** Moored boats and the getaway speedboat: Runware models when generated, boxes otherwise. */
 function Boats() {
   const models = useGeneratedModels();
@@ -51,9 +76,13 @@ function Boats() {
         const e = models?.get(b.id === SPEEDBOAT.id ? "speedboat" : "yacht");
         if (e)
           return (
-            <Suspense key={b.id} fallback={null}>
-              <PlacedModel entry={e} x={b.x} y={WATER_Y - 0.25} z={b.z} length={b.length} />
+            <group key={b.id} position={[b.x, 0, b.z]}>
+            <Suspense fallback={null}>
+              <Floating seed={b.x * 0.37 + b.z * 0.11} size={b.length}>
+                <PlacedModel entry={e} x={0} y={0} z={0} length={b.length} />
+              </Floating>
             </Suspense>
+            </group>
           );
         return (
           <mesh key={b.id} position={[b.x, WATER_Y + 0.6, b.z]} castShadow>

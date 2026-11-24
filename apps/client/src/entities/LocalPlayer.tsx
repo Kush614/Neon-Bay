@@ -3,7 +3,7 @@ import { useAfterPhysicsStep, useBeforePhysicsStep, useRapier } from "@react-thr
 import { useEffect, useRef } from "react";
 import { Vector3, type Group } from "three";
 import { spawnPoint } from "@neon-bay/shared";
-import { CharacterBody, type MoveInput } from "@neon-bay/shared/physics";
+import { CharacterBody, PREDICTION_QUERY, type MoveInput } from "@neon-bay/shared/physics";
 import { driveAxes, installKeyboard, moveAxes } from "../input/keyboard.js";
 import { connect, localServerState, sendInput, useNetStore, vehicleBuffers } from "../net/connection.js";
 import { CAPTURE } from "../capture/mode.js";
@@ -58,7 +58,7 @@ export function LocalPlayer() {
   }, []);
 
   useEffect(() => {
-    const c = new CharacterBody(rapier, world, spawnPoint("nightclub", 0));
+    const c = new CharacterBody(rapier, world, spawnPoint("nightclub", 0), PREDICTION_QUERY);
     c.heading = Math.atan2(-Math.sin(yaw.current), -Math.cos(yaw.current));
     body.current = c;
     spawned.current = false;

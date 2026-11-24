@@ -26,6 +26,19 @@ export interface MoveInput {
 
 export const NO_INPUT: MoveInput = { x: 0, z: 0, run: false };
 
+/**
+ * Rapier interaction groups (high 16 bits: memberships, low 16 bits: filter).
+ * Everything the server simulates keeps Rapier's default (all groups). Client-only cosmetic
+ * bodies (knockable props, ambient traffic) are members of COSMETIC only, and the client's
+ * movement prediction queries with PREDICTION_QUERY, which skips them. So cosmetic physics can
+ * never make the predicted player drift from the server's authoritative one.
+ */
+export const GROUP_GAMEPLAY = 0x0001;
+export const GROUP_COSMETIC = 0x0002;
+export const interactionGroups = (memberships: number, filter: number): number => ((memberships & 0xffff) << 16) | (filter & 0xffff);
+export const COSMETIC_GROUPS = interactionGroups(GROUP_COSMETIC, 0xffff);
+export const PREDICTION_QUERY = interactionGroups(GROUP_GAMEPLAY, 0xffff & ~GROUP_COSMETIC);
+
 /** Remove colliders made by addStaticColliders, skipping any the current world no longer owns. */
 export function removeColliders(world: World, colliders: RAPIER_NS.Collider[]): void {
   for (const c of colliders) {
@@ -62,6 +75,8 @@ export class CharacterBody {
     rapier: Rapier,
     private readonly world: World,
     spawn: { x: number; z: number },
+    /** Collision query filter for movement; the client passes PREDICTION_QUERY. */
+    private readonly queryGroups?: number,
   ) {
     this.body = world.createRigidBody(
       rapier.RigidBodyDesc.kinematicPositionBased().setTranslation(spawn.x, CHARACTER_CENTER_Y + 0.05, spawn.z),
@@ -85,7 +100,7 @@ export class CharacterBody {
     this.verticalVelocity = Math.max(-MAX_FALL_SPEED, this.verticalVelocity + GRAVITY * dt);
     const dy = this.verticalVelocity * dt;
 
-    this.controller.computeColliderMovement(this.collider, { x: dx, y: dy, z: dz });
+    this.controller.computeColliderMovement(this.collider, { x: dx, y: dy, z: dz }, undefined, this.queryGroups);
     const m = this.controller.computedMovement();
     this.grounded = this.controller.computedGrounded();
     if (this.grounded) this.verticalVelocity = 0;
