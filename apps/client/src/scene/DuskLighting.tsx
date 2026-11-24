@@ -13,7 +13,7 @@ import { Color, MathUtils, Vector3, type DirectionalLight, type Fog, type Hemisp
 import { useNetStore } from "../net/connection.js";
 import { useLocalStore } from "../store.js";
 import { QUALITY } from "./quality.js";
-import { daylight, dusk, GOLDEN, nightGlow, ramp, targetTimeOfDay, tod } from "./timeOfDay.js";
+import { daylight, dusk, GOLDEN, nightGlow, PINNED_TOD, ramp, targetTimeOfDay, tod } from "./timeOfDay.js";
 
 const SUN_AZIMUTH = MathUtils.degToRad(250); // west-south-west, over the city
 const sunDir = new Vector3();
@@ -51,6 +51,8 @@ export function DuskLighting() {
   // Fetch the sunset sky once the game is idle, so it is cached before golden hour and is
   // not part of the initial download.
   useEffect(() => {
+    // Only fetch the sunset sky if this session can reach it (?tod=cycle or a late ?tod).
+    if (PINNED_TOD !== null && PINNED_TOD < SKY_SWAP) return;
     const id = setTimeout(() => useLoader.preload(HDRLoader, SUNSET_SKY), 8000);
     return () => clearTimeout(id);
   }, []);

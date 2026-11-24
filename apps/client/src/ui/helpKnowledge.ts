@@ -110,7 +110,7 @@ export const TOPICS: Topic[] = [
   {
     id: "graphics",
     keys: ["graphics", "quality", "lag", "slow", "fps", "performance", "low", "high"],
-    answer: "Add ?quality=low (no reflections, ambient occlusion or post-effects), ?quality=medium (the default) or ?quality=high to the URL. The sky moves from a sunny midday through golden hour to night as the heist plays out; ?tod=0 to 1 pins it (0 is midday, 1 is night).",
+    answer: "Add ?quality=low (no reflections, ambient occlusion or post-effects), ?quality=medium (the default) or ?quality=high to the URL. The sky stays sunny all session. Add ?tod=cycle to play from midday through sunset to night, or ?tod=0 to 1 to pin a time (0 is midday, 1 is night).",
   },
 ];
 

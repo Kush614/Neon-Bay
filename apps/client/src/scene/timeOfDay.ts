@@ -1,8 +1,8 @@
 // One timeOfDay value drives the sun, sky, fog, windows and neon (SPEC.md section 8):
 // 0 is a sunny midday, GOLDEN (0.4) is golden hour and 1 is night. It follows the session: the
-// lobby and plan are in full sun, the heist runs into sunset and the getaway ends at night.
-// (The spec started at golden hour; the project owner asked for a sunny sky, README decisions.)
-// ?tod=0..1 pins it, for screenshots.
+// By default the whole session stays at sunny midday (project owner's call, README decisions).
+// ?tod=0..1 pins another time, and ?tod=cycle restores the spec's day-to-night arc
+// (the lobby and plan in sun, sunset during the heist, night for the getaway).
 import { PHASE_SECONDS, type Phase } from "@neon-bay/shared";
 import { Color, MathUtils } from "three";
 
@@ -17,7 +17,13 @@ const ANCHORS: Record<Phase, [number, number]> = {
 };
 
 const pinned = typeof location === "undefined" ? null : new URLSearchParams(location.search).get("tod");
-export const PINNED_TOD = pinned !== null && pinned !== "" && Number.isFinite(Number(pinned)) ? MathUtils.clamp(Number(pinned), 0, 1) : null;
+/** True only with ?tod=cycle: time of day follows the session phases. */
+export const CYCLE = pinned === "cycle";
+export const PINNED_TOD: number | null = CYCLE
+  ? null
+  : pinned !== null && pinned !== "" && Number.isFinite(Number(pinned))
+    ? MathUtils.clamp(Number(pinned), 0, 1)
+    : 0; // always sunny
 
 export function targetTimeOfDay(phase: Phase, timeLeft: number): number {
   if (PINNED_TOD !== null) return PINNED_TOD;

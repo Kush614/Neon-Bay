@@ -10,8 +10,8 @@ Every third-party asset used in the build, with its source and licence. Assets g
 | World layout and colliders | procedural | `packages/shared/src/world.ts` | Original | |
 | Facades, neon, palms, ocean shader, people, lighting | procedural | `apps/client/src/scene/*`, `entities/Character.tsx` | Original | Canvas-drawn window atlas, vertex-shader palms, procedural ocean normals. |
 | Sound and music | procedural | `apps/client/src/audio/sound.ts` | Original | Synthesised live in WebAudio; no audio files. |
-| Sunset sky HDRI `belfast_sunset_puresky` (2k) | `apps/client/public/cc0/hdri/` | [Poly Haven](https://polyhaven.com/a/belfast_sunset_puresky) | CC0 1.0 | Background and image-based light from golden hour to night (loaded when the game is idle, not in the initial download). |
-| Sunny midday sky HDRI `kloofendal_48d_partly_cloudy_puresky` (2k) | `apps/client/public/cc0/hdri/` | [Poly Haven](https://polyhaven.com/a/kloofendal_48d_partly_cloudy_puresky) | CC0 1.0 | Background and image-based light from the lobby until golden hour. |
+| Sunset sky HDRI `belfast_sunset_puresky` (2k) | `apps/client/public/cc0/hdri/` | [Poly Haven](https://polyhaven.com/a/belfast_sunset_puresky) | CC0 1.0 | Background and image-based light for the optional `?tod=cycle` day-to-night mode (only fetched then). |
+| Sunny midday sky HDRI `kloofendal_48d_partly_cloudy_puresky` (2k) | `apps/client/public/cc0/hdri/` | [Poly Haven](https://polyhaven.com/a/kloofendal_48d_partly_cloudy_puresky) | CC0 1.0 | Background and image-based light for the whole session. |
 | PBR textures `plastered_wall`, `clean_asphalt`, `coast_sand_01`, `leafy_grass`, `large_grey_tiles` (1k: diffuse, GL normal, roughness) | `apps/client/public/cc0/textures/` | [Poly Haven](https://polyhaven.com/textures) | CC0 1.0 | Building plaster, roads, beach, park, pavements. |
 | Models `street_lamp_01`, `metal_trash_can` (1k glTF) | `apps/client/public/cc0/models/` | [Poly Haven](https://polyhaven.com/models) | CC0 1.0 | Second Street lamps and bins. |
 
